@@ -26,7 +26,7 @@ class PC3D :
         self.tlvs_json = None
         self.point_cloud_unit_struct = '5f'
         self.point_cloud_unit_length = struct.calcsize ( self.point_cloud_unit_struct )
-        self.point_struct = '2B3h'
+        self.point_struct = '2b3h'
         self.point_length = struct.calcsize ( self.point_struct )
         self.points_list = []
         self.points_json = None
@@ -42,24 +42,37 @@ class PC3D :
         self.target_part3_length = struct.calcsize ( self.target_part3_struct )
         self.targets_list = []
         self.targets_json = None
-        self.presence_indication_struct = '1I'
+        self.target_index_struct = 'B'
+        self.target_index_length = struct.calcsize ( self.point_struct )
+        self.target_index_list = []
+        self.targets_index_json = None
+        self.presence_indication_struct = 'I'
         self.presence_indication_length = struct.calcsize ( self.presence_indication_struct )
         self.presence_indication_value = None
         self.presence_indication_json = None
         self.frame_json_2_azure = None
         self.frame_json_2_file = None
 
-    def send_data_2_azure ( self ) :
-        pass
-        # Azure part
-        #try :
-        #    azure_client.send_message ( f"\n\n{{frame:{self.frame_header_json},{self.tlvs_json}}}" )
-        #except :
-        #    print ( "Azure error connecting or sending message")
-
-    # Zdekodowanie wszystkich punktów z ramki zaczynającej się od Punktów
-    # Zapisanie punktów do dict, zapisanie słownika do pliku i skasowanie słownika
-    # Usunięcie Punktu z ramki w każdej iteracji
+    def get_target_index ( self , tlv_length ) :
+        number_target_index = int ( ( tlv_length - self.tlv_header_length ) / self.target_index_length )
+        for i in range ( number_target_index ) :
+            try :
+                target_id = struct.unpack ( self.target_index_struct , self.raw_data[(self.tlv_header_length) + ( i * self.target_index_length ):][:self.target_index_length] )
+                if target_id :
+                    self.targets_list.append ( f"{{'target_id':{target_id}}}" )
+            except struct.error as e :
+                self.targets_list.append ( f"{{'error':'{e}'}}" )
+                return False
+        l = len ( self.target_index_list )
+        self.target_index_json = f"'num_target_index':{number_target_index},'target_index':["
+        for i in range ( l ) :
+            self.target_index_json += str ( self.target_index_list[i] )
+            if i < ( l - 1 ) :
+                self.target_index_json = self.target_index_json + ","
+        self.target_index_json = self.target_index_json + "]"
+        pprint.pprint ( self.target_index_json )
+        self.target_index_list.clear ()
+        return True
 
     def get_targets_list ( self , tlv_length ) :
         #  trzeba zastanowić sie i przerobić na listę dictionary
@@ -126,9 +139,6 @@ class PC3D :
             presence_indication = struct.unpack ( self.presence_indication_struct , self.raw_data[self.tlv_header_length:][:self.presence_indication_length] )
             self.presence_indication_value = presence_indication[0] # Dlacze otrzymuję to jako tuple, a nie int 32bit
             self.presence_indication_json = f"'presence_indication':{self.presence_indication_value}"
-            #print ( type(presence_indication) )
-            #print ( type(self.presence_indication_value) )
-            #print ( f"{self.presence_indication_value}" )
             pprint.pprint (self.presence_indication_json)
             return True
         except struct.error as e :
@@ -165,7 +175,8 @@ class PC3D :
                     else :
                         self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json}}}}}" )
                 case self.tlv_type_target_index :
-                    self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json}}}}}" )
+                    self.get_targets_index ( self.tlv_header_dict['tlv_length'] )
+                    self.tlv_list.append ( f"{{target_index:{{{self.target_index_json}}}}}" )
                 case self.tlv_type_target_height :
                     pass
                 case self.tlv_type_presence_indication :

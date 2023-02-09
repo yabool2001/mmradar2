@@ -7,7 +7,7 @@ import pprint
 import datetime
 import file_ops2
 import mmradar_ops2
-import mmradar_pc3d
+import mmradar_pc3d2
 import time
 
 #from mmradar_ops2 import mmradar_conf
@@ -85,7 +85,7 @@ while i < saved_bin_frames_numbers :
             logging.info (f"Error: data_source not known. App exit!\n")
             exit
     # pprint.pprint ( frame )
-    pc3d_object = mmradar_pc3d.PC3D ( frame )
+    pc3d_object = mmradar_pc3d2.PC3D ( frame )
     pc3d_object.get_json_data ()
     #pc3d_object.get_frame_header ()
     #pprint.pprint ( pc3d_object.frame_header_json )
