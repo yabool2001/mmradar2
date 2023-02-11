@@ -14,14 +14,12 @@ class PC3D :
         self.tlv_type_target_height = 1012
         self.tlv_type_presence_indication = 1021
         # old firmwware self.frame_header_struct = 'Q9I2H'
+        self.frame_dict = dict ()
         self.frame_header_struct = 'Q8I'
         self.frame_header_length = struct.calcsize ( self.frame_header_struct )
-        self.frame_header_dict = dict ()
         self.frame_header_json = None
         self.tlv_header_struct = '2I'
         self.tlv_header_length = struct.calcsize ( self.tlv_header_struct )
-        self.tlv_header_dict = dict ()
-        self.tlv_header_json = None
         self.tlv_list = []
         self.tlvs_json = None
         self.point_cloud_unit_struct = '5f'
@@ -148,32 +146,38 @@ class PC3D :
     def get_tlv_header ( self ) :
         try:
             tlv_type, tlv_length = struct.unpack ( self.tlv_header_struct , self.raw_data[:self.tlv_header_length] )
-            self.tlv_header_dict = { 'tlv_type' : tlv_type , 'tlv_length' : tlv_length }
+            tlv_header_dict = { 'tlv_type' : tlv_type , 'tlv_length' : tlv_length }
+            if tlv_type != self.tlv_type_point_cloud : # do usunięcia
+                pprint.pprint ( tlv_header_dict ) # do usunięcia
         except struct.error as e :
-            self.tlv_header_dict = { 'error' : {e} }
-            logging.info ( f"TLV Header unpack error during frame unpack number: {self.frame_header_dict['frame_number']}" )
-        self.tlv_header_json = f"'tlv_header':{self.tlv_header_dict}"
-        if tlv_type != self.tlv_type_point_cloud : 
-            pprint.pprint ( self.tlv_header_json )
-        if self.tlv_header_dict.get ( 'error' ) :
+            tlv_header_dict = { 'error' : {e} }
+            logging.info ( f"TLV Header unpack error during frame unpack number: {self.frame_dict['frame_header']['frame_number']}" )
+        self.frame_dict['tlv_header'] = tlv_header_dict
+        xl = len (self.raw_data) # do usunięcia
+        if tlv_header_dict.get ( 'error' ) :
             return False
         else:
             return True
 
     def get_tlv ( self ) :
-        if self.get_tlv_header () :
-            match self.tlv_header_dict.get ( 'tlv_type' ) :
+        if self.get_tlv_header () : 
+            #xl = len (self.raw_data) # do usunięcia
+            #print ( xl ) # do usunięcia
+            match self.frame_dict['frame_header'].get ( 'tlv_type' ) :
                 case self.tlv_type_point_cloud :
                     if self.get_point_cloud_unit () : 
                         self.get_points_list ( self.tlv_header_dict['tlv_length'] )
-                        self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.pointcloud_unit_json},{self.points_json}}}}}" )
+                        #self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.pointcloud_unit_json},{self.points_json}}}}}" )
                     else : # tutaj coś jest nie tak, bo jesli jest False to czemu wstawiam to unit? jeśli chodzi o point to trzeba to poprawić
-                        self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.pointcloud_unit_json}}}}}" )
+                        #self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.pointcloud_unit_json}}}}}" )
+                        pass
                 case self.tlv_type_target_list :
                     if self.get_targets_list ( self.tlv_header_dict['tlv_length'] ) :
-                        self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.targets_json}}}}}" )
+                        #self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.targets_json}}}}}" )
+                        pass
                     else :
-                        self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json}}}}}" )
+                        #self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json}}}}}" )
+                        pass
                 case self.tlv_type_target_index :
                     self.get_targets_index ( self.tlv_header_dict['tlv_length'] )
                     self.tlv_list.append ( f"{{target_index:{{{self.target_index_json}}}}}" )
@@ -181,20 +185,46 @@ class PC3D :
                     pass
                 case self.tlv_type_presence_indication :
                     if self.get_presence_indication () :
-                        self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.presence_indication_json}}}}}" )
+                        #self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json},{self.presence_indication_json}}}}}" )
+                        pass
                 case _ :
-                    self.raw_data = self.raw_data[self.tlv_header_dict['tlv_length']:]
+                    #self.raw_data = self.raw_data[self.frame_dict['tlv_header']['tlv_length']:]
+                    pass
+            # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debud, że tlv_length nie obejmuje tlv_header
+            self.raw_data = self.raw_data[(self.tlv_header_length + self.frame_dict['tlv_header']['tlv_length']):]
             return True
         else :
-            self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json}}}}}" )
+            #self.tlv_list.append ( f"{{tlv:{{{self.tlv_header_json}}}}}" )
             return False
 
     # Rozpakuj po kolei każdy z TLV
     def get_tlvs ( self ) :
-        for i in range ( self.frame_header_dict['number_of_tlvs'] ) : # self.frame_header_dict['num_tlvs'] exists for sure and I don't need get function.
+        i = self.frame_dict['frame_header']['number_of_tlvs']
+        while i > 0 : # self.frame_header_dict['num_tlvs'] exists for sure and I don't need get function.
             if not self.get_tlv () :
-                logging.info ( f"Break 1 in function: with frame number: {self.frame_header_dict['frame_number']}" )
+                logging.info ( f"Break 1 in function: with frame number: {self.frame_dict['frame_header']['frame_number']}" )
                 break
+            i=i-1
+            
+    # Rozpakuj i zapisz dane z Frame header
+    def get_frame_header ( self ) :
+        try:
+            magic_word , version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_struct , self.raw_data[:self.frame_header_length] )
+            if magic_word == self.control :
+                frame_header_dict = { 'frame_number' : frame_number , 'number_of_tlvs' : number_of_tlvs , 'number_of_points' : number_of_points , 'subframe_number' : subframe_number , 'version' : version , 'total_packet_length' : total_packet_length , 'platform' : platform , 'time' : time }
+            else :
+                frame_header_dict = { 'error' : {magic_word} }
+                logging.info ( f"Frame header magic word is not corrected: {magic_word}. Exit." )
+        except struct.error as e :
+            frame_header_dict = { 'error' : {e} }
+            logging.info ( f"Frame header unpack error during frame unpack number: {frame_header_dict}" )
+        #self.frame_dict = { 'frame_header' : frame_header_dict }
+        self.frame_dict['frame_header'] = frame_header_dict
+        #self.frame_dict.update ( { 'frame_header' : frame_header_dict } )
+        pass 
+
+
+    def tlvs2json ( self ) :
         l = len ( self.tlv_list )
         self.tlvs_json = "'tlvs':["
         for i in range ( l ) :
@@ -204,28 +234,11 @@ class PC3D :
         self.tlvs_json = self.tlvs_json + "]"
         self.tlv_list.clear ()
         # pprint.pprint(self.tlvs_json)
-            
-    # Rozpakuj i zapisz dane z Frame header
-    def get_frame_header ( self ) :
-        try:
-            magic_word , version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_struct , self.raw_data[:self.frame_header_length] )
-            if magic_word == self.control :
-                self.frame_header_dict = { 'frame_number' : frame_number , 'number_of_tlvs' : number_of_tlvs , 'number_of_points' : number_of_points , 'subframe_number' : subframe_number , 'version' : version , 'total_packet_length' : total_packet_length , 'platform' : platform , 'time' : time }
-            else :
-                self.frame_header_dict = { 'error' : {magic_word} }
-                logging.info ( f"Frame header magic word is not corrected: {magic_word}" )
-        except struct.error as e :
-            self.frame_header_dict = { 'error' : {e} }
-            logging.info ( f"Frame header unpack error during frame unpack number: {self.frame_header_dict}" )
-        self.frame_header_json = f"{{'frame_header':{self.frame_header_dict}}}"
-        # pprint.pprint ( self.frame_header_json ) # do usunięcia
 
     def get_json_data ( self ) :
         self.get_frame_header ()
-        if ( self.frame_header_dict.get ( 'number_of_tlvs' ) ) : # To jest super sprawdzone. Nie zmieniaj! get jest bezpieczne, bo w tym miejscu nie jest jeszcze pewny czy self.frame_header_dict['num_tlvs'] istnieje i jego brak mógłby spowodować błąd w programie
+        if ( self.frame_dict['frame_header'].get ( 'number_of_tlvs' ) ) :
             self.raw_data = self.raw_data[self.frame_header_length:]
             self.get_tlvs ()
-        self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
-        self.frame_json_2_azure = f"{{'id' : {time.time_ns ()},'frame_number':{self.frame_header_dict.get('frame_number')},'presence':{self.presence_indication_value}}}"
-        #self.frame_json_2_azure = f"{{'id' : {datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:17]},'frame_number':{self.frame_header_dict.get('frame_number')},'presence':{self.presence_indication_value}}}"
-        #self.frame_json_2_azure = f"{{'frame':{{'frame_number':{self.frame_header_dict.get('frame_number')},'presence':{random.randint ( 0, 12 )}}}"
+            #self.tlvs2json ()
+        #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
