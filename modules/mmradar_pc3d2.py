@@ -20,6 +20,7 @@ class PC3D :
         self.frame_header_json = None
         self.tlv_header_struct = '2I'
         self.tlv_header_length = struct.calcsize ( self.tlv_header_struct )
+        self.tlv_dict = dict ()
         self.tlv_list = []
         self.tlvs_json = None
         self.point_cloud_unit_struct = '5f'
@@ -152,7 +153,7 @@ class PC3D :
         except struct.error as e :
             tlv_header_dict = { 'error' : {e} }
             logging.info ( f"TLV Header unpack error during frame unpack number: {self.frame_dict['frame_header']['frame_number']}" )
-        self.frame_dict['tlv_header'] = tlv_header_dict
+        self.tlv_dict['tlv_header'] = tlv_header_dict
         xl = len (self.raw_data) # do usunięcia
         if tlv_header_dict.get ( 'error' ) :
             return False
@@ -163,7 +164,7 @@ class PC3D :
         if self.get_tlv_header () : 
             #xl = len (self.raw_data) # do usunięcia
             #print ( xl ) # do usunięcia
-            match self.frame_dict['frame_header'].get ( 'tlv_type' ) :
+            match self.tlv_dict['tlv_header'].get ( 'tlv_type' ) :
                 case self.tlv_type_point_cloud :
                     if self.get_point_cloud_unit () : 
                         self.get_points_list ( self.tlv_header_dict['tlv_length'] )
@@ -180,7 +181,7 @@ class PC3D :
                         pass
                 case self.tlv_type_target_index :
                     self.get_targets_index ( self.tlv_header_dict['tlv_length'] )
-                    self.tlv_list.append ( f"{{target_index:{{{self.target_index_json}}}}}" )
+                    #self.tlv_list.append ( f"{{target_index:{{{self.target_index_json}}}}}" )
                 case self.tlv_type_target_height :
                     pass
                 case self.tlv_type_presence_indication :
