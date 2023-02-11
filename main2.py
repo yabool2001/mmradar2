@@ -28,7 +28,7 @@ saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_167574622320758750
 #saved_bin_data_file_name        = 'save_bin_data\mmradar_gen_1675550277997491400_edited.bin_raw_data' # poprawić nazwę katalogu na saved
 pc3d_cfg_file_name              = 'chirp_cfg/ISK_6m_default-mmwvt-v14.11.0.cfg'
 mmradar_stop_conf_file_name     = 'chirp_cfg/sensor_stop.cfg'
-mmradar_start_conf_file_name    = 'chirp_cfg/sensor_start.cfg'
+mmradar_start_conf_file_name    = 'chirp_cfg/sensor_start.cfg' 
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################\n"
 
