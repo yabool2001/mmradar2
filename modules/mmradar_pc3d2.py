@@ -136,16 +136,16 @@ class PC3D :
                     self.get_pointcloud_unit ()
                     if not self.tlv_dict['units'].get ( 'error' ) :
                         self.get_points ()
-                        self.tlv_list.append ( self.tlv_dict )
+                        self.tlv_list.append ( self.tlv_dict.copy() )
                 case self.tlv_type_targets :
                     self.get_targets ()
-                    self.tlv_list.append ( self.tlv_dict )
+                    self.tlv_list.append ( self.tlv_dict.copy() )
                 case self.tlv_type_target_index :
                     self.get_target_index ()
-                    self.tlv_list.append ( self.tlv_dict )
+                    self.tlv_list.append ( self.tlv_dict.copy() )
                 case self.tlv_type_target_height :
                     self.get_target_height ()
-                    self.tlv_list.append ( self.tlv_dict )
+                    self.tlv_list.append ( self.tlv_dict.copy() )
                 case self.tlv_type_presence_indication :
                     self.get_presence_indication ()
                     self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane

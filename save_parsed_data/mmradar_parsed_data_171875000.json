@@ -1,1 +1,0 @@
-{'frame_header': {'frame_number': 963, 'number_of_tlvs': 5, 'number_of_points': 2, 'subframe_number': 0, 'version': 50659332, 'total_packet_length': 246, 'platform': 682051, 'time': 0}, 'tlvs': [{}, {}, {}, {}, {'tl': {'tlv_type': 1021, 'tlv_length': 4}, 'presence': {'presence_indication': {1}}}]}
