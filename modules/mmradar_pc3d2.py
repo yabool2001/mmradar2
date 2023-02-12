@@ -200,9 +200,10 @@ class PC3D :
 
     def get_json_data ( self ) :
         self.get_frame_header ()
-        if ( self.frame_dict['frame_header'].get ( 'number_of_tlvs' ) ) :
+        if not self.frame_dict['frame_header'].get ( 'error' ) :
             self.raw_data = self.raw_data[self.frame_header_length:]
             self.get_tlvs ()
-            pass
+        else :
+            logging.info ( f"Frame header unpack error during frame number. No frame number." )
             #self.tlvs2json ()
         #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
