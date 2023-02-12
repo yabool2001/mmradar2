@@ -148,7 +148,6 @@ class PC3D :
                     self.tlv_list.append ( self.tlv_dict )
                 case self.tlv_type_presence_indication :
                     self.get_presence_indication ()
-                    #self.tlv_list.append ( self.tlv_dict )
                     self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane
                     pass
                 case _ :
