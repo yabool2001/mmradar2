@@ -4,7 +4,7 @@
 
 import sys
 #sys.setdefaultencoding('utf-8')
-sys.path.append ( "/Users/mzeml/python/mmradar/modules/" )
+sys.path.append ( "/Users/mzeml/python/mmradar2/modules/" )
 import logging
 import pprint
 
@@ -12,6 +12,8 @@ import datetime
 import file_ops2
 import mmradar_ops2
 import mmradar_pc3d2
+import serial
+import serial_ops2
 import time
 
 #from mmradar_ops2 import mmradar_conf
@@ -21,7 +23,7 @@ import time
 ### DEFINITIONS 
 ################################################################
 
-data_source                     = 2 # 0: device, 1: UDP, 2: file
+data_source                     = 0 # 0: device, 1: UDP, 2: file
 chirp_cfg                       = 0 # 0: no cfg, 1: only start(), 2: full cfg
 raws                            = bytes(1)
 log_file_name                   = 'log/mmradar.log'
@@ -31,11 +33,9 @@ data_json_file_name             = 'save_parsed_data\mmradar.data.json'
 saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746223207587500.bin_raw_data'
 #saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746902363904100.bin_raw_data'
 #saved_bin_data_file_name        = 'save_bin_data\mmradar_gen_1675550277997491400_edited.bin_raw_data' # poprawić nazwę katalogu na saved
-pc3d_cfg_file_name              = 'chirp_cfg/ISK_6m_default-mmwvt-v14.11.0.cfg'
-mmradar_stop_conf_file_name     = 'chirp_cfg/sensor_stop.cfg'
-mmradar_start_conf_file_name    = 'chirp_cfg/sensor_start.cfg' 
+chirp_conf_file_name            = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 
-hello = "\n\n##########################################\n############# mmradar started ############\n##########################################\n"
+hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
 
 ################################################################
 ###################### LOGGING CONFIG ##########################
@@ -60,12 +60,16 @@ print ( hello )
 ### READ DATA
 match data_source :
     case 0:
-        logging.info (f"Error: data_source = 0. App exit!\n")
-        exit
+        print ( "\n############# Direct device sourcing.\n" )
+        conf_com = serial.Serial ()
+        data_com = serial.Serial ()
+        serial_ops2.set_serials_cfg ( conf_com , data_com )
+        serial_ops2.open_serial_ports ( conf_com , data_com )
     case 1:
         logging.info (f"Error: data_source = 1. App exit!\n")
         exit
     case 2:
+        print ( "\n############# Read saved raw data.\n" )
         saved_bin_frames = open ( saved_bin_data_file_name , 'r' ) .readlines ()
         saved_bin_frames_numbers = len ( saved_bin_frames )
     case _:
@@ -77,6 +81,9 @@ frame_json_2_file = ''
 while i < saved_bin_frames_numbers :
     match data_source :
         case 0:
+            conf_com.reset_input_buffer ()
+            conf_com.reset_output_buffer ()
+            serial_ops2.mmradar_conf ( chirp_conf_file_name , conf_com )
             # frame = data_com.read ( 4666 )
             logging.info (f"Error: data_source = 0. App exit!\n")
             exit
