@@ -52,6 +52,7 @@ class PC3D :
                 target_index_dict = { 'target_id' : target_id[0] }
             except struct.error as e :
                 target_index_dict = { 'error' : e }
+                logging.info ( f"get_target_index error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
             target_index_list.append ( target_index_dict )
         self.tlv_dict['target_indexes'] = target_index_list
 
@@ -64,6 +65,7 @@ class PC3D :
                 target_height_dict = { 'target_id' : target_id , 'max_z' : max_z , 'min_z' : min_z } 
             except struct.error as e :
                 target_height_dict = { 'error' : e }
+                logging.info ( f"get_target_height error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
             target_height_list.append ( target_height_dict )
         self.tlv_dict['target_heights'] = target_height_list
 
@@ -81,6 +83,7 @@ class PC3D :
                 target_dict = { 'target_id' : target_id , 'target_pos_x' : target_pos_x , 'target_pos_y' : target_pos_y , 'target_pos_z' : target_pos_z , 'target_vel_x' : target_vel_x , 'target_vel_y' : target_vel_y , 'target_vel_z' : target_vel_z , 'target_acc_x' : target_acc_x , 'target_acc_y' : target_acc_y , 'target_acc_z' : target_acc_z , 'err_covariance' : err_covariance , 'gain' : gain , 'confidence_level' :  confidence_level}
             except struct.error as e :
                 target_dict = { 'error' : e }
+                logging.info ( f"get_targets error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
             target_list.append ( target_dict )
         self.tlv_dict['targets'] = target_list
 
@@ -95,6 +98,7 @@ class PC3D :
                 point_dict = { 'elevation' : point_elevation , 'azimuth' : point_azimuth , 'doppler' : point_doppler , 'range' : point_range , 'snr' : point_snr }
             except struct.error as e :
                 point_dict = { 'error' : e }
+                logging.info ( f"get_points unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
             point_list.append ( point_dict )
         self.tlv_dict['points'] = point_list
 
@@ -104,6 +108,7 @@ class PC3D :
             pointcloud_unit_dict = { 'elevation_unit' : elevation_unit , 'azimuth_unit' : azimuth_unit , 'doppler_unit' : doppler_unit , 'range_unit' : range_unit , 'snr_unit' : snr_unit }
         except struct.error as e :
             pointcloud_unit_dict = { 'error' : e }
+            logging.info ( f"get_pointcloud_unit unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
         self.tlv_dict['units'] = pointcloud_unit_dict
 
     def get_presence_indication ( self ) :
@@ -114,18 +119,16 @@ class PC3D :
             #    pprint.pprint ( self.frame_dict['frame_header']['frame_number'] )
         except struct.error as e :
             presence_indication_dict = { 'error' : e }
+            logging.info ( f"get_presence_indication unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
         self.tlv_dict['presence'] = presence_indication_dict
 
     def get_tl ( self ) :
         try:
             tlv_type, tlv_length = struct.unpack ( self.tl_struct , self.raw_data[:self.tl_length] )
             tl_dict = { 'tlv_type' : tlv_type , 'tlv_length' : tlv_length }
-            #if tlv_type != self.tlv_type_point_cloud : # do usunięcia
-            #    pprint.pprint ( tl_dict ) # do usunięcia
-            #pprint.pprint ( tl_dict ) # do usunięcia
         except struct.error as e :
             tl_dict = { 'error' : e }
-            logging.info ( f"TLV Header unpack error during frame unpack number: {self.frame_dict['frame_header']['frame_number']}" )
+            logging.info ( f"TLV Header unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
         self.tlv_dict['tl'] = tl_dict
 
     def get_tlv ( self ) :
@@ -181,9 +184,9 @@ class PC3D :
                 frame_header_dict = { 'frame_number' : frame_number , 'number_of_tlvs' : number_of_tlvs , 'number_of_points' : number_of_points , 'subframe_number' : subframe_number , 'version' : version , 'total_packet_length' : total_packet_length , 'platform' : platform , 'time' : time }
             else :
                 frame_header_dict = { 'error' : {magic_word} }
-                logging.info ( f"Frame header magic word is not corrected: {magic_word}. Exit." )
+                logging.info ( f"Frame header magic word is not corrected: {magic_word}." )
         except struct.error as e :
-            frame_header_dict = { 'error' : {e} }
+            frame_header_dict = { 'error' : e }
             logging.info ( f"Frame header unpack error during frame unpack number: {frame_header_dict}" )
         self.frame_dict['frame_header'] = frame_header_dict
 
@@ -204,6 +207,6 @@ class PC3D :
             self.raw_data = self.raw_data[self.frame_header_length:]
             self.get_tlvs ()
         else :
-            logging.info ( f"Frame header unpack error during frame number. No frame number." )
+            logging.info ( f"Frame header unpack error. No frame number." )
             #self.tlvs2json ()
         #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
