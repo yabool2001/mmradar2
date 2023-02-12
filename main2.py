@@ -1,4 +1,6 @@
 # Issue 1 - tlv list
+# Zamienić wszystkie self.tlv_header_length na self.tl_length
+# Napisać do ti, że tlv_length to jest tl_length. Jeśli to jest tlv, to mnie poprawcie. Moim zdaniem lepiej żeby była podawana całą wartość tlv
 
 import sys
 #sys.setdefaultencoding('utf-8')
@@ -24,6 +26,7 @@ chirp_cfg                       = 0 # 0: no cfg, 1: only start(), 2: full cfg
 raws                            = bytes(1)
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
+data_json_file_name             = 'save_parsed_data\mmradar.data.json'
 #saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675550277997491400.bin_raw_data' # poprawić nazwę katalogu na saved
 saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746223207587500.bin_raw_data'
 #saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746902363904100.bin_raw_data'
@@ -89,9 +92,5 @@ while i < saved_bin_frames_numbers :
     # pprint.pprint ( frame )
     pc3d_object = mmradar_pc3d2.PC3D ( frame )
     pc3d_object.get_json_data ()
-    #pc3d_object.get_frame_header ()
-    #pprint.pprint ( pc3d_object.frame_header_json )
-    #pc3d_object.get_frame_header ()
-    #frame_json_2_file += pc3d_object.frame_json_2_file
-    #frame_json_2_azure += pc3d_object.frame_json_2_azure
+    file_ops2.write_2_local_file ( f"save_parsed_data/mmradar_parsed_data_{time.process_time_ns ()}.json" , pc3d_object.tlv_list )
     del pc3d_object
