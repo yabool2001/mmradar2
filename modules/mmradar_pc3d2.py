@@ -17,7 +17,6 @@ class PC3D :
         self.frame_dict = dict ()
         self.frame_header_struct = 'Q8I'
         self.frame_header_length = struct.calcsize ( self.frame_header_struct )
-        self.frame_header_json = None
         self.tl_struct = '2I'
         self.tl_length = struct.calcsize ( self.tl_struct )
         self.tlv_header_struct = '2I' # docelowo usunąć i pozostawić tylko 2 powyższe
@@ -142,14 +141,16 @@ class PC3D :
                     self.get_targets ()
                     self.tlv_list.append ( self.tlv_dict )
                 case self.tlv_type_target_index :
-                    self.get_targets_index ()
+                    self.get_target_index ()
                     self.tlv_list.append ( self.tlv_dict )
                 case self.tlv_type_target_height :
                     self.get_target_height ()
                     self.tlv_list.append ( self.tlv_dict )
                 case self.tlv_type_presence_indication :
                     self.get_presence_indication ()
-                    self.tlv_list.append ( self.tlv_dict )
+                    #self.tlv_list.append ( self.tlv_dict )
+                    self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane
+                    pass
                 case _ :
                     #self.raw_data = self.raw_data[self.frame_dict['tlv_header']['tlv_length']:]
                     pass
@@ -169,6 +170,7 @@ class PC3D :
             if not self.get_tlv () :
                 break
             i=i-1
+        self.frame_dict['tlvs'] = self.tlv_list
             
     # Rozpakuj i zapisz dane z Frame header
     def get_frame_header ( self ) :
@@ -200,5 +202,6 @@ class PC3D :
         if ( self.frame_dict['frame_header'].get ( 'number_of_tlvs' ) ) :
             self.raw_data = self.raw_data[self.frame_header_length:]
             self.get_tlvs ()
+            pass
             #self.tlvs2json ()
         #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"

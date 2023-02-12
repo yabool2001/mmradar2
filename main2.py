@@ -92,5 +92,5 @@ while i < saved_bin_frames_numbers :
     # pprint.pprint ( frame )
     pc3d_object = mmradar_pc3d2.PC3D ( frame )
     pc3d_object.get_json_data ()
-    file_ops2.write_2_local_file ( f"save_parsed_data/mmradar_parsed_data_{time.process_time_ns ()}.json" , pc3d_object.tlv_list )
+    file_ops2.write_2_local_file ( f"save_parsed_data/mmradar_parsed_data_{time.process_time_ns ()}.json" , str ( pc3d_object.frame_dict ) )
     del pc3d_object
