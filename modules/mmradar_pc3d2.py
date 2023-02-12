@@ -39,7 +39,7 @@ class PC3D :
         self.target_height_struct = 'B2f'
         self.target_height_length = struct.calcsize ( self.target_height_struct )
         self.target_index_struct = 'B'
-        self.target_index_length = struct.calcsize ( self.point_struct )
+        self.target_index_length = struct.calcsize ( self.target_index_struct )
         self.presence_indication_struct = 'I'
         self.presence_indication_length = struct.calcsize ( self.presence_indication_struct )
 
@@ -49,7 +49,7 @@ class PC3D :
         for i in range ( number ) :
             try :
                 target_id = struct.unpack ( self.target_index_struct , self.raw_data[(self.tl_length) + ( i * self.target_index_length ):][:self.target_index_length] )
-                target_index_dict = { 'target_id' : target_id }
+                target_index_dict = { 'target_id' : target_id[0] }
             except struct.error as e :
                 target_index_dict = { 'error' : e }
             target_index_list.append ( target_index_dict )
@@ -110,6 +110,8 @@ class PC3D :
         try :
             presence_indication = struct.unpack ( self.presence_indication_struct , self.raw_data[self.tl_length:][:self.presence_indication_length] )
             presence_indication_dict = { 'presence_indication' : { presence_indication[0] } } # Dlaczego otrzymuję tuple, a nie int32bit
+            #if presence_indication[0] != 0 :
+            #    pprint.pprint ( self.frame_dict['frame_header']['frame_number'] )
         except struct.error as e :
             presence_indication_dict = { 'error' : e }
         self.tlv_dict['presence'] = presence_indication_dict
@@ -120,7 +122,7 @@ class PC3D :
             tl_dict = { 'tlv_type' : tlv_type , 'tlv_length' : tlv_length }
             #if tlv_type != self.tlv_type_point_cloud : # do usunięcia
             #    pprint.pprint ( tl_dict ) # do usunięcia
-            pprint.pprint ( tl_dict ) # do usunięcia
+            #pprint.pprint ( tl_dict ) # do usunięcia
         except struct.error as e :
             tl_dict = { 'error' : e }
             logging.info ( f"TLV Header unpack error during frame unpack number: {self.frame_dict['frame_header']['frame_number']}" )
