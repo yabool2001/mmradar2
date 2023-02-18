@@ -8,7 +8,7 @@ class PC3D :
     def __init__ ( self , raw_data ) :
         self.raw_data = raw_data
         self.control = 506660481457717506
-        self.tlv_type_point_cloud = 1020
+        self.v_type_point_cloud = 1020
         self.tlv_type_targets = 1010
         self.tlv_type_target_index = 1011
         self.tlv_type_target_height = 1012
@@ -138,7 +138,7 @@ class PC3D :
             #xl = len (self.raw_data) # do usunięcia
             #print ( xl ) # do usunięcia
             match self.tlv_dict['tl'].get ( 'tlv_type' ) :
-                case self.tlv_type_point_cloud :
+                case self.v_type_point_cloud :
                     self.get_pointcloud_unit ()
                     if not self.tlv_dict['units'].get ( 'error' ) :
                         self.get_points ()
