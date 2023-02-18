@@ -156,8 +156,9 @@ class PC3D :
                     self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane
                     pass
                 case _ :
-                    #self.raw_data = self.raw_data[self.frame_dict['tlv_header']['tlv_length']:]
-                    pass
+                    logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
+                    # UWAGAAAAAAAAAAAAA! dodać return False i usuwać całą ramkę bez usuwania tlv bo jak jest błedyny typ to i jest błędny lenght
+                    return False
             # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że tlv_length nie obejmuje tlv_header
             self.raw_data = self.raw_data[(self.tlv_header_length + self.tlv_dict['tl']['tlv_length']):]
             #xl = len (self.raw_data) # do usunięcia
@@ -180,6 +181,8 @@ class PC3D :
     def get_frame_header ( self ) :
         try:
             magic_word , version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_struct , self.raw_data[:self.frame_header_length] )
+            if frame_number == 840 : # TLV Header unpack error unpack requires a buffer of 8 bytes. Error in get_tlv() in frame nr: 840 & 885
+                pass
             if magic_word == self.control :
                 frame_header_dict = { 'frame_number' : frame_number , 'number_of_tlvs' : number_of_tlvs , 'number_of_points' : number_of_points , 'subframe_number' : subframe_number , 'version' : version , 'total_packet_length' : total_packet_length , 'platform' : platform , 'time' : time }
             else :

@@ -4,7 +4,7 @@
 
 import sys
 #sys.setdefaultencoding('utf-8')
-sys.path.append ( "/Users/mzeml/python/mmradar2/modules/" )
+sys.path.append ( "/Users/mzeml/python/mmradar/modules/" )
 import logging
 import pprint
 
@@ -23,7 +23,7 @@ import time
 ### DEFINITIONS 
 ################################################################
 
-data_source                     = 0 # 0: device, 1: UDP, 2: file
+data_source                     = 2 # 0: device, 1: UDP, 2: file
 chirp_cfg                       = 0 # 0: no cfg, 1: only start(), 2: full cfg
 raws                            = bytes(1)
 log_file_name                   = 'log/mmradar.log'
@@ -75,9 +75,8 @@ match data_source :
     case _:
         logging.info (f"Error: data_source not known. App exit!\n")
         exit
+
 i = 0
-frame_json_2_azure = ''
-frame_json_2_file = ''
 while i < saved_bin_frames_numbers :
     match data_source :
         case 0:
@@ -99,5 +98,5 @@ while i < saved_bin_frames_numbers :
     # pprint.pprint ( frame )
     pc3d_object = mmradar_pc3d2.PC3D ( frame )
     pc3d_object.get_json_data ()
-    file_ops2.write_2_local_file ( f"save_parsed_data/mmradar_parsed_data_2023.02.12.json" , str ( pc3d_object.frame_dict ) )
+    file_ops2.write_2_local_file ( f"save_parsed_data/mmradar_parsed_data_2023.02.18.json" , str ( pc3d_object.frame_dict ) )
     del pc3d_object
