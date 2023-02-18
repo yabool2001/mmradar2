@@ -88,6 +88,7 @@ class PC3D :
         self.tlv_dict['targets'] = target_list
 
     def get_points ( self ) :
+        # UWAGAAAAAAAAAAAAAA! W ramce 840 wyjątkowo mało punktów wyszło, next header is wrong. Check if it could be reason.
         # przeanalizować przerobienie na listę dict
         point_list = [] # trzeba deklarować
         points_number = int ( ( self.tlv_dict['tl']['tlv_length'] - self.pointcloud_unit_length ) / self.point_length )
@@ -159,7 +160,6 @@ class PC3D :
                     logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
                     self.tlv_dict['tl'] = { 'error' : "tlv_type not matched" }
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                    # UWAGAAAAAAAAAAAAA! dodać return False i usuwać całą ramkę bez usuwania tlv bo jak jest błedyny typ to i jest błędny lenght
                     return False
             # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że tlv_length nie obejmuje tlv_header
             self.raw_data = self.raw_data[(self.tlv_header_length + self.tlv_dict['tl']['tlv_length']):]
