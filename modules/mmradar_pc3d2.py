@@ -9,10 +9,10 @@ class PC3D :
         self.raw_data = raw_data
         self.control = 506660481457717506
         self.v_type_point_cloud = 1020
-        self.tlv_type_targets = 1010
-        self.tlv_type_target_index = 1011
-        self.tlv_type_target_height = 1012
-        self.tlv_type_presence_indication = 1021
+        self.v_type_targets = 1010
+        self.v_type_target_index = 1011
+        self.v_type_target_height = 1012
+        self.v_type_presence_indication = 1021
         # old firmwware self.frame_header_struct = 'Q9I2H'
         self.frame_dict = dict ()
         self.frame_header_struct = 'Q8I'
@@ -45,7 +45,7 @@ class PC3D :
 
     def get_target_index ( self ) :
         target_index_list = []
-        number = int ( self.tlv_dict['tl']['tlv_length'] / self.target_index_length )
+        number = int ( self.tlv_dict['tl']['v_length'] / self.target_index_length )
         for i in range ( number ) :
             try :
                 target_id = struct.unpack ( self.target_index_struct , self.raw_data[(self.tl_length) + ( i * self.target_index_length ):][:self.target_index_length] )
@@ -58,7 +58,7 @@ class PC3D :
 
     def get_target_height ( self ) :
         target_height_list = []
-        number = int ( self.tlv_dict['tl']['tlv_length'] / self.target_height_length )
+        number = int ( self.tlv_dict['tl']['v_length'] / self.target_height_length )
         for i in range ( number ) :
             try :
                 target_id , max_z , min_z = struct.unpack ( self.target_height_struct , self.raw_data[(self.tl_length) + ( i * self.target_height_length ):][:self.target_height_length] )
@@ -72,7 +72,7 @@ class PC3D :
     def get_targets ( self ) :
         #  trzeba zastanowić sie i przerobić na listę dictionary
         target_list = []
-        number = int ( self.tlv_dict['tl']['tlv_length'] / self.target_length )
+        number = int ( self.tlv_dict['tl']['v_length'] / self.target_length )
         for i in range ( number ) :
             try :
                 target_id , target_pos_x , target_pos_y , target_pos_z , target_vel_x , target_vel_y , target_vel_z , target_acc_x , target_acc_y , target_acc_z = struct.unpack ( self.target_part1_struct , self.raw_data[(self.tl_length) + ( i * self.target_length ):][:self.target_part1_length] )
@@ -91,7 +91,7 @@ class PC3D :
         # UWAGAAAAAAAAAAAAAA! W ramce 840 wyjątkowo mało punktów wyszło, next header is wrong. Check if it could be reason.
         # przeanalizować przerobienie na listę dict
         point_list = [] # trzeba deklarować
-        points_number = int ( ( self.tlv_dict['tl']['tlv_length'] - self.pointcloud_unit_length ) / self.point_length )
+        points_number = int ( ( self.tlv_dict['tl']['v_length'] - self.pointcloud_unit_length ) / self.point_length )
         for i in range ( points_number ) :
             try :
                 # uwaga, żeby poniżej nie zdefiniować range jako zmiennej
@@ -125,11 +125,11 @@ class PC3D :
 
     def get_tl ( self ) :
         try:
-            tlv_type, tlv_length = struct.unpack ( self.tl_struct , self.raw_data[:self.tl_length] )
-            tl_dict = { 'tlv_type' : tlv_type , 'tlv_length' : tlv_length }
+            v_type, v_length = struct.unpack ( self.tl_struct , self.raw_data[:self.tl_length] )
+            tl_dict = { 'v_type' : v_type , 'v_length' : v_length }
         except struct.error as e :
             tl_dict = { 'error' : e }
-            logging.info ( f"TLV Header unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
+            logging.info ( f"TL unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
         self.tlv_dict['tl'] = tl_dict
 
     def get_tlv ( self ) :
@@ -137,32 +137,32 @@ class PC3D :
         if not self.tlv_dict['tl'].get ( 'error' ) : 
             #xl = len (self.raw_data) # do usunięcia
             #print ( xl ) # do usunięcia
-            match self.tlv_dict['tl'].get ( 'tlv_type' ) :
+            match self.tlv_dict['tl'].get ( 'v_type' ) :
                 case self.v_type_point_cloud :
                     self.get_pointcloud_unit ()
                     if not self.tlv_dict['units'].get ( 'error' ) :
                         self.get_points ()
                         self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.tlv_type_targets :
+                case self.v_type_targets :
                     self.get_targets ()
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.tlv_type_target_index :
+                case self.v_type_target_index :
                     self.get_target_index ()
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.tlv_type_target_height :
+                case self.v_type_target_height :
                     self.get_target_height ()
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.tlv_type_presence_indication :
+                case self.v_type_presence_indication :
                     self.get_presence_indication ()
                     self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane
                     pass
                 case _ :
                     logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
-                    self.tlv_dict['tl'] = { 'error' : "tlv_type not matched" }
+                    self.tlv_dict['tl'] = { 'error' : "v_type not matched" }
                     self.tlv_list.append ( self.tlv_dict.copy() )
                     return False
-            # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że tlv_length nie obejmuje tlv_header
-            self.raw_data = self.raw_data[(self.tlv_header_length + self.tlv_dict['tl']['tlv_length']):]
+            # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że v_length nie obejmuje tlv_header
+            self.raw_data = self.raw_data[(self.tlv_header_length + self.tlv_dict['tl']['v_length']):]
             #xl = len (self.raw_data) # do usunięcia
             self.tlv_dict.clear ()
             return True
