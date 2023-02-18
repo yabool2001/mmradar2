@@ -157,6 +157,8 @@ class PC3D :
                     pass
                 case _ :
                     logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
+                    self.tlv_dict['tl'] = { 'error' : "tlv_type not matched" }
+                    self.tlv_list.append ( self.tlv_dict.copy() )
                     # UWAGAAAAAAAAAAAAA! dodać return False i usuwać całą ramkę bez usuwania tlv bo jak jest błedyny typ to i jest błędny lenght
                     return False
             # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że tlv_length nie obejmuje tlv_header
