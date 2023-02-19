@@ -23,16 +23,13 @@ import time
 ### DEFINITIONS 
 ################################################################
 
-data_source                     = 2 # 0: device, 1: UDP, 2: file
+data_source                     = 0 # 0: device, 1: UDP, 2: file
 chirp_cfg                       = 0 # 0: no cfg, 1: only start(), 2: full cfg
-raws                            = bytes(1)
+raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
-data_json_file_name             = 'save_parsed_data\mmradar.data.json'
-#saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675550277997491400.bin_raw_data' # poprawić nazwę katalogu na saved
+saved_parsed_data_file_name     = 'saved_parsed_data\mmradar.data.json'
 saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746223207587500.bin_raw_data'
-#saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746902363904100.bin_raw_data'
-#saved_bin_data_file_name        = 'save_bin_data\mmradar_gen_1675550277997491400_edited.bin_raw_data' # poprawić nazwę katalogu na saved
 chirp_conf_file_name            = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
@@ -61,42 +58,47 @@ print ( hello )
 match data_source :
     case 0:
         print ( "\n############# Direct device sourcing.\n" )
+        logging.info ( f"############# Direct device sourcing.\n")
         conf_com = serial.Serial ()
         data_com = serial.Serial ()
         serial_ops2.set_serials_cfg ( conf_com , data_com )
         serial_ops2.open_serial_ports ( conf_com , data_com )
+        conf_com.reset_input_buffer ()
+        conf_com.reset_output_buffer ()
+        mmradar_ops2.mmradar_conf ( chirp_conf_file_name , conf_com )
+        print ( "\n############# Device configured.\n" )
+        logging.info ( f"############# Device configured.\n")
+        frames_limit = 1
     case 1:
-        logging.info (f"Error: data_source = 1. App exit!\n")
+        print ( "\n############# UDP sourcing.\n" )
+        logging.info ( f"############# UDP sourcing.\n")
+        frames_limit = 1
         exit
     case 2:
-        print ( "\n############# Read saved raw data.\n" )
+        print ( "\n############# Saved raw data sourcing.\n" )
+        logging.info ( f"############# Saved raw data sourcing.\n")
         saved_bin_frames = open ( saved_bin_data_file_name , 'r' ) .readlines ()
-        saved_bin_frames_numbers = len ( saved_bin_frames )
+        frames_limit = len ( saved_bin_frames )
     case _:
         logging.info (f"Error: data_source not known. App exit!\n")
         exit
 
 i = 0
-while i < saved_bin_frames_numbers :
+while i < frames_limit :
     match data_source :
         case 0:
-            conf_com.reset_input_buffer ()
-            conf_com.reset_output_buffer ()
-            serial_ops2.mmradar_conf ( chirp_conf_file_name , conf_com )
-            # frame = data_com.read ( 4666 )
-            logging.info (f"Error: data_source = 0. App exit!\n")
-            exit
+            data_com.reset_input_buffer ()
+            data_com.reset_output_buffer ()
+            frame = data_com.read ( 4666 )
+            pc3d_object = mmradar_pc3d2.PC3D ( frame )
+            pc3d_object.get_json_data ()
         case 1 :
             logging.info (f"Error: data_source = 1. App exit!\n")
             exit
         case 2 :
             frame = eval ( saved_bin_frames[i] )
+            pc3d_object = mmradar_pc3d2.PC3D ( frame )
+            pc3d_object.get_json_data ()
             i += 1
-        case _:
-            logging.info (f"Error: data_source not known. App exit!\n")
-            exit
-    # pprint.pprint ( frame )
-    pc3d_object = mmradar_pc3d2.PC3D ( frame )
-    pc3d_object.get_json_data ()
-    file_ops2.write_2_local_file ( f"save_parsed_data/mmradar_parsed_data_2023.02.18.json" , str ( pc3d_object.frame_dict ) )
+    file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
     del pc3d_object

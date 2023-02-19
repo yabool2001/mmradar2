@@ -127,6 +127,7 @@ class PC3D :
         try:
             v_type, v_length = struct.unpack ( self.tl_struct , self.raw_data[:self.tl_length] )
             tl_dict = { 'v_type' : v_type , 'v_length' : v_length }
+            logging.info ( f"Got tlv v_type: {v_type}" )
         except struct.error as e :
             tl_dict = { 'error' : e }
             logging.info ( f"TL unpack error {e} during frame number: {self.frame_dict['frame_header']['frame_number']}" )
@@ -183,6 +184,7 @@ class PC3D :
     def get_frame_header ( self ) :
         try:
             magic_word , version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_struct , self.raw_data[:self.frame_header_length] )
+            logging.info ( f"Got frame number: {frame_number}" )
             if frame_number == 840 : # TLV Header unpack error unpack requires a buffer of 8 bytes. Error in get_tlv() in frame nr: 840 & 885
                 pass
             if magic_word == self.control :

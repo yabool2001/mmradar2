@@ -24,14 +24,14 @@ def mmradar_conf ( conf_file_name , conf_com ) :
     conf_com.reset_input_buffer ()
     conf_com.reset_output_buffer ()
     for line in cfg :
-        time.sleep(.1)
+        time.sleep(.03)
         conf_com.write ( line.encode () )
         ack = conf_com.readline ()
         logging.info ( f"{conf_com.name} port ack: {ack}" )
         ack = conf_com.readline ()
         logging.info ( f"{conf_com.name} port ack: {ack}" )
         time.sleep ( 3 )
-        conf_com.reset_input_buffer ()
+    conf_com.reset_input_buffer ()
 
 ################################################################
 ############# STOP SENSOR AND CLOSE CONF COM PORT ##############
