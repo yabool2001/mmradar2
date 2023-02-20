@@ -220,10 +220,11 @@ class PC3D :
         self.data_com.reset_output_buffer ()
         control = self.data_com.read ( self.control_leght )
         while ( control != self.control ) :
-            control_error = 1 # do usunięcie i ew. zamiany na logging
-            pprint.pprint ( control_error ) # jw.
-            if ( control_error ) : # jw.
-                break # jw.
+            control_error += 1 # do usunięcie i ew. zamiany na logging
+            if ( control_error == 10 ) : # jw.
+                pprint.pprint ( control_error ) # jw.
+                self.data_com.close ()
+                exit() False # jw.
             index_b2 = control.find ( self.control[0] ) # sprawdź czy w śrdoku nie ma bajtu będącego początkiem control, jeśli był to spróbuj czy nie jest to początek control 
             if index_b2 == -1 :
                 control = self.data_com.read ( self.control_leght )
@@ -233,4 +234,4 @@ class PC3D :
         frame_header = self.data_com.read ( self.frame_header_wo_control_length )
         version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_wo_control_struct , frame_header[:self.frame_header_wo_control_length] )
         logging.info ( f"Got frame number: {frame_number}" )
-        self.data_com.close ()
+        
