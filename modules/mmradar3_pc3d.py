@@ -224,7 +224,7 @@ class PC3D :
             if ( control_error == 10 ) : # jw.
                 pprint.pprint ( control_error ) # jw.
                 self.data_com.close ()
-                exit() False # jw.
+                exit() # jw.
             index_b2 = control.find ( self.control[0] ) # sprawdź czy w śrdoku nie ma bajtu będącego początkiem control, jeśli był to spróbuj czy nie jest to początek control 
             if index_b2 == -1 :
                 control = self.data_com.read ( self.control_leght )
