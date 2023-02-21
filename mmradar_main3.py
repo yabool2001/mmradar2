@@ -24,13 +24,13 @@ import time
 ################################################################
 
 data_source                     = 0 # 0: device, 1: UDP, 2: file
-cfg_chirp                       = 0 # 0: no cfg, 1: full cfg
+cfg_chirp                       = 0 # 0: no cfg, 1: sensor start, 2: full cfg
 raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
 saved_parsed_data_file_name     = 'saved_parsed_data\mmradar.data.json'
 saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746223207587500.bin_raw_data'
-cfg_chirp_conf_file_name        = 'chirp_cfg/ISK_6m_staticRetention.cfg'
+cfg_chirp_full_file_name        = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 cfg_chirp_start_file_name       = 'chirp_cfg/sensor_start.cfg'
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
@@ -64,14 +64,17 @@ match data_source :
         data_com = serial.Serial ()
         serial_ops2.set_serials_cfg ( conf_com , data_com )
         serial_ops2.open_serial_ports ( conf_com , data_com )
-        if cfg_chirp :
-            mmradar3_ops.mmradar_conf ( cfg_chirp_conf_file_name , conf_com )
-            conf_com.close ()
-            print ( "\n############# Device configured.\n" )
-            logging.info ( f"############# Device configured.\n")
-        else :
-            mmradar3_ops.mmradar_conf ( cfg_chirp_start_file_name , conf_com )
-            conf_com.close ()
+        match cfg_chirp :
+            case 0 : # do nothing
+                logging.info ( f"############# Device no cfg.\n")
+            case 1 :
+                mmradar3_ops.mmradar_conf ( cfg_chirp_start_file_name , conf_com )
+                logging.info ( f"############# Device started.\n")
+            case 2 : # full cfg
+                mmradar3_ops.mmradar_conf ( cfg_chirp_full_file_name , conf_com )
+                print ( "\n############# Device full cfg.\n" )
+                logging.info ( f"############# Device full cfg.\n")
+        conf_com.close ()
         frames_limit = 1
     case 1:
         print ( "\n############# UDP sourcing.\n" )
