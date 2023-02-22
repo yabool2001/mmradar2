@@ -45,7 +45,7 @@ class PC3D :
         number = int ( self.tlv_dict['tl']['v_length'] / self.target_index_length )
         for i in range ( number ) :
             try :
-                target_id = struct.unpack ( self.target_index_struct , self.raw_data[(self.tl_length) + ( i * self.target_index_length ):][:self.target_index_length] )
+                target_id = struct.unpack ( self.target_index_struct , self.tlvs_bytes[(self.tl_length) + ( i * self.target_index_length ):][:self.target_index_length] )
                 target_index_dict = { 'target_id' : target_id[0] }
             except struct.error as e :
                 target_index_dict = { 'error' : e }
@@ -58,7 +58,7 @@ class PC3D :
         number = int ( self.tlv_dict['tl']['v_length'] / self.target_height_length )
         for i in range ( number ) :
             try :
-                target_id , max_z , min_z = struct.unpack ( self.target_height_struct , self.raw_data[(self.tl_length) + ( i * self.target_height_length ):][:self.target_height_length] )
+                target_id , max_z , min_z = struct.unpack ( self.target_height_struct , self.tlvs_bytes[(self.tl_length) + ( i * self.target_height_length ):][:self.target_height_length] )
                 target_height_dict = { 'target_id' : target_id , 'max_z' : max_z , 'min_z' : min_z } 
             except struct.error as e :
                 target_height_dict = { 'error' : e }
@@ -72,10 +72,10 @@ class PC3D :
         number = int ( self.tlv_dict['tl']['v_length'] / self.target_length )
         for i in range ( number ) :
             try :
-                target_id , target_pos_x , target_pos_y , target_pos_z , target_vel_x , target_vel_y , target_vel_z , target_acc_x , target_acc_y , target_acc_z = struct.unpack ( self.target_part1_struct , self.raw_data[(self.tl_length) + ( i * self.target_length ):][:self.target_part1_length] )
+                target_id , target_pos_x , target_pos_y , target_pos_z , target_vel_x , target_vel_y , target_vel_z , target_acc_x , target_acc_y , target_acc_z = struct.unpack ( self.target_part1_struct , self.tlvs_bytes[(self.tl_length) + ( i * self.target_length ):][:self.target_part1_length] )
                 # Zostawiam err_covariance[16] na później
-                err_covariance = struct.unpack ( self.target_part2_struct , self.raw_data[(self.tlv_header_length) + ( i * self.target_length ) + self.target_part1_length:][:self.target_part2_length] )
-                gain , confidence_level = struct.unpack ( self.target_part3_struct , self.raw_data[(self.tlv_header_length) + ( i * self.target_length ) + self.target_part1_length + self.target_part2_length:][:self.target_part3_length] )
+                err_covariance = struct.unpack ( self.target_part2_struct , self.tlvs_bytes[(self.tlv_header_length) + ( i * self.target_length ) + self.target_part1_length:][:self.target_part2_length] )
+                gain , confidence_level = struct.unpack ( self.target_part3_struct , self.tlvs_bytes[(self.tlv_header_length) + ( i * self.target_length ) + self.target_part1_length + self.target_part2_length:][:self.target_part3_length] )
                 # Zapisz target
                 target_dict = { 'target_id' : target_id , 'target_pos_x' : target_pos_x , 'target_pos_y' : target_pos_y , 'target_pos_z' : target_pos_z , 'target_vel_x' : target_vel_x , 'target_vel_y' : target_vel_y , 'target_vel_z' : target_vel_z , 'target_acc_x' : target_acc_x , 'target_acc_y' : target_acc_y , 'target_acc_z' : target_acc_z , 'err_covariance' : err_covariance , 'gain' : gain , 'confidence_level' :  confidence_level}
             except struct.error as e :
@@ -92,7 +92,7 @@ class PC3D :
         for i in range ( points_number ) :
             try :
                 # uwaga, żeby poniżej nie zdefiniować range jako zmiennej
-                point_elevation , point_azimuth , point_doppler , point_range , point_snr = struct.unpack ( self.point_struct , self.raw_data[ ( self.tl_length + self.pointcloud_unit_length ) + ( i * self.point_length ):][:self.point_length] )
+                point_elevation , point_azimuth , point_doppler , point_range , point_snr = struct.unpack ( self.point_struct , self.tlvs_bytes[ ( self.tl_length + self.pointcloud_unit_length ) + ( i * self.point_length ):][:self.point_length] )
                 point_dict = { 'elevation' : point_elevation , 'azimuth' : point_azimuth , 'doppler' : point_doppler , 'range' : point_range , 'snr' : point_snr }
             except struct.error as e :
                 point_dict = { 'error' : e }
@@ -102,7 +102,7 @@ class PC3D :
 
     def get_pointcloud_unit ( self ) :
         try :
-            elevation_unit , azimuth_unit , doppler_unit , range_unit , snr_unit = struct.unpack ( self.pointcloud_unit_struct , self.raw_data[self.tl_length:][:self.pointcloud_unit_length] )
+            elevation_unit , azimuth_unit , doppler_unit , range_unit , snr_unit = struct.unpack ( self.pointcloud_unit_struct , self.tlvs_bytes[self.tl_length:][:self.pointcloud_unit_length] )
             pointcloud_unit_dict = { 'elevation_unit' : elevation_unit , 'azimuth_unit' : azimuth_unit , 'doppler_unit' : doppler_unit , 'range_unit' : range_unit , 'snr_unit' : snr_unit }
         except struct.error as e :
             pointcloud_unit_dict = { 'error' : e }
@@ -111,7 +111,7 @@ class PC3D :
 
     def get_presence_indication ( self ) :
         try :
-            presence_indication = struct.unpack ( self.presence_indication_struct , self.raw_data[self.tl_length:][:self.presence_indication_length] )
+            presence_indication = struct.unpack ( self.presence_indication_struct , self.tlvs_bytes[self.tl_length:][:self.presence_indication_length] )
             presence_indication_dict = { 'presence_indication' : { presence_indication[0] } } # Dlaczego otrzymuję tuple, a nie int32bit
             #if presence_indication[0] != 0 :
             #    pprint.pprint ( self.frame_dict['frame_header']['frame_number'] )
@@ -122,7 +122,7 @@ class PC3D :
 
     def get_tl ( self ) :
         try:
-            v_type, v_length = struct.unpack ( self.tl_struct , self.raw_data[:self.tl_length] )
+            v_type, v_length = struct.unpack ( self.tl_struct , self.tlvs_bytes[:self.tl_length] )
             tl_dict = { 'v_type' : v_type , 'v_length' : v_length }
             logging.info ( f"Got tlv v_type: {v_type}" )
         except struct.error as e :
@@ -133,7 +133,7 @@ class PC3D :
     def get_tlv ( self ) :
         self.get_tl ()
         if not self.tlv_dict['tl'].get ( 'error' ) : 
-            #xl = len (self.raw_data) # do usunięcia
+            #xl = len (self.tlvs_bytes) # do usunięcia
             #print ( xl ) # do usunięcia
             match self.tlv_dict['tl'].get ( 'v_type' ) :
                 case self.v_type_point_cloud :
@@ -160,8 +160,8 @@ class PC3D :
                     self.tlv_list.append ( self.tlv_dict.copy() )
                     return False
             # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że v_length nie obejmuje tlv_header
-            self.raw_data = self.raw_data[(self.tlv_header_length + self.tlv_dict['tl']['v_length']):]
-            #xl = len (self.raw_data) # do usunięcia
+            self.tlvs_bytes = self.tlvs_bytes[(self.tlv_header_length + self.tlv_dict['tl']['v_length']):]
+            #xl = len (self.tlvs_bytes) # do usunięcia
             self.tlv_dict.clear ()
             return True
         else :
@@ -174,7 +174,7 @@ class PC3D :
         while i > 0 : # self.frame_header_dict['num_tlvs'] exists for sure and I don't need get function.
             if not self.get_tlv () :
                 break
-            i=i-1
+            i= i - 1
         self.frame_dict['tlvs'] = self.tlv_list
             
     def tlvs2json ( self ) :
@@ -191,7 +191,7 @@ class PC3D :
     def get_json_data ( self ) :
         self.get_frame_header ()
         if not self.frame_dict['frame_header'].get ( 'error' ) :
-            self.raw_data = self.raw_data[self.frame_header_length:]
+            self.tlvs_bytes = self.tlvs_bytes[self.frame_header_length:]
             self.get_tlvs ()
         else :
             logging.info ( f"Frame header unpack error. No frame number." )
