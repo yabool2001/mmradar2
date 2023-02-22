@@ -95,7 +95,8 @@ while i < frames_limit :
     match data_source :
         case 0:
             pc3d_object = mmradar3_pc3d.PC3D ( data_com )
-            pc3d_object.get_frame_header3 ()
+            if pc3d_object.get_frame_header () :
+                pc3d_object.get_frame_header ()
         case 1 :
             logging.info (f"Error: data_source = 1. App exit!\n")
             exit

@@ -7,7 +7,8 @@ import struct
 class PC3D :
     def __init__ ( self , data_com ) :
         self.data_com = data_com
-        #self.control = 506660481457717506
+        self.tlvs = bytearray(b'')
+        #self.control = 506660481457717506 # poprzednio używana w wersji 2 wartość decimal
         self.control = bytearray ( b'\x02\x01\x04\x03\x06\x05\x08\x07' )
         self.control_leght = len ( self.control )
         self.v_type_point_cloud = 1020
@@ -176,23 +177,6 @@ class PC3D :
             i=i-1
         self.frame_dict['tlvs'] = self.tlv_list
             
-    # Rozpakuj i zapisz dane z Frame header
-    def get_frame_header ( self ) :
-        try:
-            magic_word , version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_struct , self.raw_data[:self.frame_header_length] )
-            logging.info ( f"Got frame number: {frame_number}" )
-            if frame_number == 840 : # TLV Header unpack error unpack requires a buffer of 8 bytes. Error in get_tlv() in frame nr: 840 & 885
-                pass
-            if magic_word == self.control :
-                frame_header_dict = { 'frame_number' : frame_number , 'number_of_tlvs' : number_of_tlvs , 'number_of_points' : number_of_points , 'subframe_number' : subframe_number , 'version' : version , 'total_packet_length' : total_packet_length , 'platform' : platform , 'time' : time }
-            else :
-                frame_header_dict = { 'error' : {magic_word} }
-                logging.info ( f"Frame header magic word is not corrected: {magic_word}." )
-        except struct.error as e :
-            frame_header_dict = { 'error' : e }
-            logging.info ( f"Frame header unpack error during frame unpack number: {frame_header_dict}" )
-        self.frame_dict['frame_header'] = frame_header_dict
-
     def tlvs2json ( self ) :
         l = len ( self.tlv_list )
         self.tlvs_json = "'tlvs':["
@@ -214,7 +198,7 @@ class PC3D :
             #self.tlvs2json ()
         #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
 
-    def get_frame_header3 ( self ) :
+    def get_frame_header ( self ) :
         control_error = 0
         self.data_com.reset_input_buffer ()
         self.data_com.reset_output_buffer ()
@@ -230,8 +214,18 @@ class PC3D :
             else :
                 control = control[index_b2:]
                 control = control + self.data_com.read ( self.control_leght - self.control_leght )
-        frame_header = self.data_com.read ( self.frame_header_wo_control_length )
-        version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_wo_control_struct , frame_header[:self.frame_header_wo_control_length] )
-        logging.info ( f"Got frame number: {frame_number}" )
-        tlvs = self.data_com.read ( total_packet_length - ( self.control_leght + self.frame_header_wo_control_length ) ) # do usunięcia
         
+        try :
+            frame_header = self.data_com.read ( self.frame_header_wo_control_length )
+            version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_wo_control_struct , frame_header[:self.frame_header_wo_control_length] )
+            logging.info ( f"Got frame number: {frame_number}" )
+            self.tlvs = self.data_com.read ( total_packet_length - ( self.control_leght + self.frame_header_wo_control_length ) ) # do usunięcia
+        except struct.error as e :
+            frame_header_dict = { 'error' : e }
+            logging.info ( f"Frame header unpack error: {e} during frame unpack number: {frame_header_dict}" )
+        self.frame_dict['frame_header'] = frame_header_dict
+        
+        if frame_header_dict.get ( 'error' ) :
+            return False
+        else :
+            return True
