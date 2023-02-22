@@ -199,6 +199,7 @@ class PC3D :
         #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
 
     def get_frame_header ( self ) :
+        frame_header_dict = dict ()
         control_error = 0
         self.data_com.reset_input_buffer ()
         self.data_com.reset_output_buffer ()
