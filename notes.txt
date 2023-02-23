@@ -1,0 +1,23 @@
+[{'tl': {...}, 'v': {...}}]{'tl': {'tlv_type': 1021, 'tlv_length': 4}, 'v': {'presence_indication': {...}}}
+
+1020 Point Cloud w ramce nr 67, która ma tylko 1 tlv o dł. 92
+
+tlv_length = 92
+pointcloud_unit_length = 20
+92-20 = 72
+point_length = 8
+72/8 = 9
+
+92 - 20 
+
+w ramce nr 83 występuje tlv_type = target_list i inne 
+sprawdzić czy tlv_type nie występuje 2 razy, bo ew. mam błąd w programie
+w ramce nr 83 występuje wiele ciekawych tlv_type
+
+Albarella
+3hotels-fiss
+
+pc3d_object = mmradar_pc3d2.PC3D ( data_com )
+
+192.168.43.227 raspberry pi 3b+
+192.168.43.215 GO3

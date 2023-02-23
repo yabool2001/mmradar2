@@ -17,11 +17,15 @@ control                         = 506660481457717506
 frame                           = bytes (1)
 
 #dst_udp_ip                      = '10.0.0.157' # Lipków raspberry pi 3b+
+#dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
+#dst_udp_ip                      = '192.168.43.215' # maczem GO3
 #dst_udp_ip                      = '10.0.0.159' # Lipków raspberry pi 02w
 dst_udp_ip                      = '10.0.0.5' # Lipków GO3
 #dst_udp_ip                      = '192.168.1.17' # Meander raspberrypi
 #dst_udp_ip                      = '192.168.1.30' # Meander MW50-SV0
 #src_udp_ip                      = '10.0.0.157' # Lipków raspberry pi 3b+
+#src_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
+#src_udp_ip                      = '192.168.43.215' # maczem GO3
 src_udp_ip                      = '10.0.0.159' # Lipków raspberry pi 02w
 ctrl_udp_port                    = 10004
 data_udp_port                    = 10005
