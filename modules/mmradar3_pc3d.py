@@ -7,7 +7,7 @@ import struct
 class PC3D :
     def __init__ ( self , data_com ) :
         self.data_com = data_com
-        self.tlvs = bytearray(b'')
+        self.tlvs_bytes = bytearray(b'')
         #self.control = 506660481457717506 # poprzednio używana w wersji 2 wartość decimal
         self.control = bytearray ( b'\x02\x01\x04\x03\x06\x05\x08\x07' )
         self.control_leght = len ( self.control )
@@ -19,6 +19,8 @@ class PC3D :
         self.frame_dict = dict ()
         self.frame_header_wo_control_struct = '8I'
         self.frame_header_wo_control_length = struct.calcsize ( self.frame_header_wo_control_struct )
+        self.tlv_dict = dict ()
+        self.tlv_list = []
         self.tl_struct = '2I'
         self.tl_length = struct.calcsize ( self.tl_struct )
         self.pointcloud_unit_struct = '5f'
@@ -74,8 +76,8 @@ class PC3D :
             try :
                 target_id , target_pos_x , target_pos_y , target_pos_z , target_vel_x , target_vel_y , target_vel_z , target_acc_x , target_acc_y , target_acc_z = struct.unpack ( self.target_part1_struct , self.tlvs_bytes[(self.tl_length) + ( i * self.target_length ):][:self.target_part1_length] )
                 # Zostawiam err_covariance[16] na później
-                err_covariance = struct.unpack ( self.target_part2_struct , self.tlvs_bytes[(self.tlv_header_length) + ( i * self.target_length ) + self.target_part1_length:][:self.target_part2_length] )
-                gain , confidence_level = struct.unpack ( self.target_part3_struct , self.tlvs_bytes[(self.tlv_header_length) + ( i * self.target_length ) + self.target_part1_length + self.target_part2_length:][:self.target_part3_length] )
+                err_covariance = struct.unpack ( self.target_part2_struct , self.tlvs_bytes[(self.tl_length) + ( i * self.target_length ) + self.target_part1_length:][:self.target_part2_length] )
+                gain , confidence_level = struct.unpack ( self.target_part3_struct , self.tlvs_bytes[(self.tl_length) + ( i * self.target_length ) + self.target_part1_length + self.target_part2_length:][:self.target_part3_length] )
                 # Zapisz target
                 target_dict = { 'target_id' : target_id , 'target_pos_x' : target_pos_x , 'target_pos_y' : target_pos_y , 'target_pos_z' : target_pos_z , 'target_vel_x' : target_vel_x , 'target_vel_y' : target_vel_y , 'target_vel_z' : target_vel_z , 'target_acc_x' : target_acc_x , 'target_acc_y' : target_acc_y , 'target_acc_z' : target_acc_z , 'err_covariance' : err_covariance , 'gain' : gain , 'confidence_level' :  confidence_level}
             except struct.error as e :
@@ -112,7 +114,7 @@ class PC3D :
     def get_presence_indication ( self ) :
         try :
             presence_indication = struct.unpack ( self.presence_indication_struct , self.tlvs_bytes[self.tl_length:][:self.presence_indication_length] )
-            presence_indication_dict = { 'presence_indication' : { presence_indication[0] } } # Dlaczego otrzymuję tuple, a nie int32bit
+            presence_indication_dict = { 'presence_indication' : presence_indication[0] } # Dlaczego otrzymuję tuple, a nie int32bit
             #if presence_indication[0] != 0 :
             #    pprint.pprint ( self.frame_dict['frame_header']['frame_number'] )
         except struct.error as e :
@@ -132,7 +134,7 @@ class PC3D :
 
     def get_tlv ( self ) :
         self.get_tl ()
-        if not self.tlv_dict['tl'].get ( 'error' ) : 
+        if not self.tlv_dict['tl'].get ( 'error' ) :
             #xl = len (self.tlvs_bytes) # do usunięcia
             #print ( xl ) # do usunięcia
             match self.tlv_dict['tl'].get ( 'v_type' ) :
@@ -153,14 +155,14 @@ class PC3D :
                 case self.v_type_presence_indication :
                     self.get_presence_indication ()
                     self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane
-                    pass
                 case _ :
                     logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
                     self.tlv_dict['tl'] = { 'error' : "v_type not matched" }
                     self.tlv_list.append ( self.tlv_dict.copy() )
                     return False
             # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że v_length nie obejmuje tlv_header
-            self.tlvs_bytes = self.tlvs_bytes[(self.tlv_header_length + self.tlv_dict['tl']['v_length']):]
+            #xl = len (self.tlvs_bytes) # do usunięcia
+            self.tlvs_bytes = self.tlvs_bytes[self.tlv_dict['tl']['v_length']:]
             #xl = len (self.tlvs_bytes) # do usunięcia
             self.tlv_dict.clear ()
             return True
@@ -186,17 +188,6 @@ class PC3D :
                 self.tlvs_json = self.tlvs_json + ","
         self.tlvs_json = self.tlvs_json + "]"
         self.tlv_list.clear ()
-        # pprint.pprint(self.tlvs_json)
-
-    def get_json_data ( self ) :
-        self.get_frame_header ()
-        if not self.frame_dict['frame_header'].get ( 'error' ) :
-            self.tlvs_bytes = self.tlvs_bytes[self.frame_header_length:]
-            self.get_tlvs ()
-        else :
-            logging.info ( f"Frame header unpack error. No frame number." )
-            #self.tlvs2json ()
-        #self.frame_json_2_file = f"\n\n{{frame:{self.frame_header_json},timestamp_ns:{time.time_ns ()},{self.tlvs_json}}}"
 
     def get_frame_header ( self ) :
         frame_header_dict = dict ()
@@ -215,17 +206,16 @@ class PC3D :
             else :
                 control = control[index_b2:]
                 control = control + self.data_com.read ( self.control_leght - self.control_leght )
-        
         try :
             frame_header = self.data_com.read ( self.frame_header_wo_control_length )
             version , total_packet_length , platform , frame_number , time , number_of_points , number_of_tlvs , subframe_number = struct.unpack ( self.frame_header_wo_control_struct , frame_header[:self.frame_header_wo_control_length] )
+            frame_header_dict = { 'frame_number' : frame_number , 'number_of_tlvs' : number_of_tlvs , 'number_of_points' : number_of_points , 'subframe_number' : subframe_number , 'version' : version , 'total_packet_length' : total_packet_length , 'platform' : platform , 'time' : time }
             logging.info ( f"Got frame number: {frame_number}" )
-            self.tlvs = self.data_com.read ( total_packet_length - ( self.control_leght + self.frame_header_wo_control_length ) ) # do usunięcia
+            self.tlvs_bytes = self.data_com.read ( total_packet_length - ( self.control_leght + self.frame_header_wo_control_length ) ) # do usunięcia
         except struct.error as e :
             frame_header_dict = { 'error' : e }
             logging.info ( f"Frame header unpack error: {e} during frame unpack number: {frame_header_dict}" )
         self.frame_dict['frame_header'] = frame_header_dict
-        
         if frame_header_dict.get ( 'error' ) :
             return False
         else :

@@ -96,7 +96,7 @@ while i < frames_limit :
         case 0:
             pc3d_object = mmradar3_pc3d.PC3D ( data_com )
             if pc3d_object.get_frame_header () :
-                pc3d_object.get_frame_header ()
+                pc3d_object.get_tlvs ()
         case 1 :
             logging.info (f"Error: data_source = 1. App exit!\n")
             exit
@@ -105,5 +105,5 @@ while i < frames_limit :
             pc3d_object = mmradar3_pc3d.PC3D ( frame )
             pc3d_object.get_json_data ()
             i += 1
-    #file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
+    file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
     del pc3d_object
