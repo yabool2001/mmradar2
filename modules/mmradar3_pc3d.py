@@ -137,29 +137,28 @@ class PC3D :
         if not self.tlv_dict['tl'].get ( 'error' ) :
             #xl = len (self.tlvs_bytes) # do usunięcia
             #print ( xl ) # do usunięcia
-            match self.tlv_dict['tl'].get ( 'v_type' ) :
-                case self.v_type_point_cloud :
-                    self.get_pointcloud_unit ()
-                    if not self.tlv_dict['units'].get ( 'error' ) :
-                        self.get_points ()
-                        self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.v_type_targets :
+            if self.tlv_dict['tl'].get ( 'v_type' ) == self.v_type_point_cloud :
+                self.get_pointcloud_unit ()
+                if not self.tlv_dict['units'].get ( 'error' ) :
+                    self.get_points ()
+                    self.tlv_list.append ( self.tlv_dict.copy() )
+            elif self.tlv_dict['tl'].get ( 'v_type' ) == self.v_type_targets :
                     self.get_targets ()
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.v_type_target_index :
+            elif self.tlv_dict['tl'].get ( 'v_type' ) == self.v_type_target_index :
                     self.get_target_index ()
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.v_type_target_height :
+            elif self.tlv_dict['tl'].get ( 'v_type' ) == self.v_type_target_height :
                     self.get_target_height ()
                     self.tlv_list.append ( self.tlv_dict.copy() )
-                case self.v_type_presence_indication :
+            elif self.tlv_dict['tl'].get ( 'v_type' ) == self.v_type_presence_indication :
                     self.get_presence_indication ()
                     self.tlv_list.append ( self.tlv_dict.copy() ) # muszę kopiować, bo inaczej po skasowaniu źródła tracę dane
-                case _ :
-                    logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
-                    self.tlv_dict['tl'] = { 'error' : "v_type not matched" }
-                    self.tlv_list.append ( self.tlv_dict.copy() )
-                    return False
+            else :
+                logging.info ( f"Error in match get_tlv in frame nr: {self.frame_dict['frame_header']['frame_number']}" )
+                self.tlv_dict['tl'] = { 'error' : "v_type not matched" }
+                self.tlv_list.append ( self.tlv_dict.copy() )
+                return False
             # Tutaj usuwam cały TLV. Usuwam dł. header i dł. payload, bo sprawdziłem w debug, że v_length nie obejmuje tlv_header
             #xl = len (self.tlvs_bytes) # do usunięcia
             self.tlvs_bytes = self.tlvs_bytes[self.tlv_dict['tl']['v_length']:]
