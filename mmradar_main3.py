@@ -26,7 +26,7 @@ import time
 
 data_source                     = 0 # 0: device, 1: UDP, 2: file
 cfg_chirp                       = 2 # 0: no cfg, 1: sensor start, 2: full cfg
-data_destination                = 2 # 0: Azure, 1: UDP, 2: file
+data_destination                = 1 # 0: Azure, 1: UDP, 2: file
 raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
@@ -36,8 +36,8 @@ cfg_chirp_full_file_name        = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 cfg_chirp_start_file_name       = 'chirp_cfg/sensor_start.cfg'
 #src_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 #src_udp_ip                      = '192.168.43.215' # maczem GO3
-dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
-#dst_udp_ip                      = '192.168.43.215' # maczem GO3
+#dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
+dst_udp_ip                      = '192.168.43.215' # maczem GO3
 data_udp_port                    = 10005
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
@@ -96,12 +96,13 @@ else :
     exit ()
 
 if data_destination == 0 :
+    logging.info (f"Error: data_destination = 0. App exit!\n")
     exit ()
 elif data_destination == 1 :
     ################ SOCKET Configuration
     udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
 elif data_destination == 2 :
-    exit ()
+    pass
 
 i = 0
 while i < frames_limit :
@@ -113,12 +114,15 @@ while i < frames_limit :
         logging.info (f"Error: data_source = 1. App exit!\n")
         exit ()
     elif data_source ==  2 :
-        pass
-    if data_destination == 0 :
+        logging.info (f"Error: data_source = 2. App exit!\n")
         exit ()
-    elif data_destination ==1 :
-        udp.sendto ( str ( pc3d_object.frame_dict ) , ( dst_udp_ip , data_udp_port ) )
-    if data_destination == 2 :
+    if data_destination == 0 :
+        logging.info (f"Error: data_destination = 0. App exit!\n")
+        exit ()
+    elif data_destination == 1 :
+        #my_str_as_bytes = str.encode(my_str)
+        udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+    elif data_destination == 2 :
         file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
     del pc3d_object
 udp.close ()
