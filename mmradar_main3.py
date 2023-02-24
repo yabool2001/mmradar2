@@ -6,6 +6,7 @@
 # thread do wysyłania UDP i zapisywania do log
 # zarządzanie przez UDP
 # możliwość rzadszego parsowania pakietów np. co 10, ustawianie przez UDP
+# crontab do uruchamiania skryptu po ka zdym reboot
 
 # Wymagania dla Linux
 # sys.path.append ( "/home/mzemlo/mmradar3/modules/" )
