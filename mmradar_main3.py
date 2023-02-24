@@ -2,6 +2,12 @@
 # Zamienić wszystkie self.tlv_header_length na self.tl_length
 # Napisać do ti, że tlv_length to jest tl_length. Jeśli to jest tlv, to mnie poprawcie. Moim zdaniem lepiej żeby była podawana całą wartość tlv
 
+# Wymagania dla Linux
+# sys.path.append ( "/home/mzemlo/mmradar3/modules/" )
+# sudo apt install python3-pip
+# python -m pip install pyserial
+# 
+
 import sys
 #sys.setdefaultencoding('utf-8')
 sys.path.append ( "/Users/mzeml/python/mmradar/modules/" )
