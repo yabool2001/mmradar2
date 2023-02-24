@@ -56,8 +56,8 @@ src_udp.bind ( ( src_udp_ip , data_udp_port ) )
 ##################### READ DATA #################################
 while True :
     try :
-        frame , address = src_udp.recvfrom ( 10 )
-        pprint.pprint ( "\n\n 2. Server received: ", frame.decode ( 'utf-8' ) , "\n\n" )
+        frame , address = src_udp.recvfrom ( 10000 )
+        print ( "\n\n 2. Server received: ", frame.decode ( 'utf-8' ) , "\n\n" )
     except struct.error as e :
         print ( e )
 ################# CLOSE DATA COM PORT FILE ######################

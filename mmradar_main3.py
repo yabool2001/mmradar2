@@ -2,6 +2,11 @@
 # Zamienić wszystkie self.tlv_header_length na self.tl_length
 # Napisać do ti, że tlv_length to jest tl_length. Jeśli to jest tlv, to mnie poprawcie. Moim zdaniem lepiej żeby była podawana całą wartość tlv
 
+# ToDo:
+# thread do wysyłania UDP i zapisywania do log
+# zarządzanie przez UDP
+# możliwość rzadszego parsowania pakietów np. co 10, ustawianie przez UDP
+
 # Wymagania dla Linux
 # sys.path.append ( "/home/mzemlo/mmradar3/modules/" )
 # sudo apt install python3-pip
