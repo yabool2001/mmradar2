@@ -11,7 +11,12 @@
 # sys.path.append ( "/home/mzemlo/mmradar3/modules/" )
 # sudo apt install python3-pip
 # python -m pip install pyserial
-# 
+
+# Przykłady operacji w Linux
+# cd /home/mzemlo/mmradar3
+# python mmradar_main3.py
+# tail -f mmradar.log
+# sudo tcpdump -A  port 10005ad
 
 import sys
 #sys.setdefaultencoding('utf-8')
