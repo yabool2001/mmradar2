@@ -37,7 +37,8 @@ chirp_conf_file_name            = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 #src_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 #src_udp_ip                      = '192.168.43.215' # maczem GO3
 #dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
-dst_udp_ip                      = '192.168.43.215' # maczem GO3
+#dst_udp_ip                      = '192.168.43.215' # maczem GO3
+dst_udp_ip                      = '127.0.0.1' # maczem GO3
 data_udp_port                    = 10005
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
@@ -128,9 +129,9 @@ while i < frames_limit :
         case 0 :
             pass
         case 1 :
-            udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
-            #thread_data_dst_1 = threading.Thread ( target = data_dst_1_thread )
-            #thread_data_dst_1.start ()
+            #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+            thread_data_dst_1 = threading.Thread ( target = data_dst_1_thread )
+            thread_data_dst_1.start ()
         case 2 :
             #file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
             thread_data_dst_2 = threading.Thread ( target = data_dst_2_thread )
