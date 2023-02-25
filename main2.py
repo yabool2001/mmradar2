@@ -110,6 +110,7 @@ match data_dst :
         pass
 
 udp_ctrl_rcv = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+udp_ctrl_rcv.setblocking ( False ) # Jak nic nie będzie w buforze to skrypt będzie działał dalej - chyba
 udp_ctrl_rcv.bind ( ( src_udp_ip , ctrl_udp_port ) )
 
 i = 0

@@ -55,14 +55,17 @@ cfg_chirp_full_file_name        = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 cfg_chirp_start_file_name       = 'chirp_cfg/sensor_start.cfg'
 #src_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 #src_udp_ip                      = '192.168.43.215' # maczem GO3
+src_udp_ip                      = '127.0.0.1' # maczem GO3 localhost
 #dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 dst_udp_ip                      = '192.168.43.215' # maczem GO3
+dst_udp_ip                      = '127.0.0.1' # maczem GO3 localhost
+ctrl_udp_port                    = 10004
 data_udp_port                    = 10005
 
 def data_dst_2_thread () :
     file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
 def data_dst_1_thread () :
-    udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+    udp_data_tx.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
 
@@ -122,7 +125,12 @@ if data_dst == 0 :
     exit ()
 elif data_dst == 1 :
     ################ SOCKET Configuration
-    udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+    # Konfiguracja gniazda do nadawania danych
+    udp_data_tx = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+    # Konfiguracja gniazda do odbioru wiadomości kontrolnych 
+    udp_ctrl_rx = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+    udp_ctrl_rx.setblocking ( False ) # Jak nic nie będzie w buforze to skrypt będzie działał dalej - chyba
+    udp_ctrl_rx.bind ( ( src_udp_ip , ctrl_udp_port ) )
 elif data_dst == 2 :
     pass
 
@@ -142,7 +150,7 @@ while i < frames_limit or data_src < 2 :
         logging.info (f"Error: data_dst = 0. App exit!\n")
         exit ()
     elif data_dst == 1 :
-        #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) ) # alternatywa dla 2 poniższych wierszy
+        #udp_data_tx.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) ) # alternatywa dla 2 poniższych wierszy
         thread_data_dst_1 = threading.Thread ( target = data_dst_1_thread )
         thread_data_dst_1.start ()
     elif data_dst == 2 :
@@ -150,5 +158,6 @@ while i < frames_limit or data_src < 2 :
         thread_data_dst_2 = threading.Thread ( target = data_dst_2_thread )
         thread_data_dst_2.start ()
     del pc3d_object
-udp.close ()
+udp_data_tx.close ()
+udp_ctrl_rx.close ()
 data_com.close ()
