@@ -36,17 +36,20 @@ saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_167574622320758750
 chirp_conf_file_name            = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 #src_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 #src_udp_ip                      = '192.168.43.215' # maczem GO3
+src_udp_ip                      = '127.0.0.1' # maczem GO3
 #dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 #dst_udp_ip                      = '192.168.43.215' # maczem GO3
 dst_udp_ip                      = '127.0.0.1' # maczem GO3
-data_udp_port                    = 10005
+ctrl_udp_port                   = 10004
+data_udp_port                   = 10005
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
 
 def data_dst_2_thread () :
     file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
 def data_dst_1_thread () :
-    udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+    #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+    udp.sendall ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
 
 ################################################################
 ###################### LOGGING CONFIG ##########################
@@ -106,6 +109,9 @@ match data_dst :
         udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
     case 2 :
         pass
+
+udp_ctrl_rcv = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+udp_ctrl_rcv.bind ( src_udp_ip , ctrl_udp_port )
 
 i = 0
 start_t = time.perf_counter ()
