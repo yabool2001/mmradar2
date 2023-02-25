@@ -21,7 +21,8 @@ dst_udp_ip                      = '127.0.0.1' # maczem GO3
 #src_udp_ip                      = '10.0.0.5' # Lipków GO3
 #src_udp_ip                      = '10.0.0.157' # Lipków raspberry pi 3b+
 #src_udp_ip                      = '10.0.0.159' # Lipków raspberry pi 02w
-src_udp_ip                      = '127.0.0.1' # maczem GO3
+#src_udp_ip                      = '127.0.0.1' # maczem GO3
+src_udp_ip                      = socket.gethostbyname ( socket.gethostname () )
 ctrl_udp_port                    = 10004
 data_udp_port                    = 10005
 
