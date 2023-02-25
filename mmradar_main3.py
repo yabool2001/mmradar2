@@ -32,6 +32,7 @@ import mmradar3_pc3d
 import socket
 import serial
 import serial_ops2
+import threading
 import time
 
 #from mmradar_ops2 import mmradar_conf
@@ -41,9 +42,9 @@ import time
 ### DEFINITIONS 
 ################################################################
 
-data_source                     = 0 # 0: device, 1: UDP, 2: file
+data_src                        = 0 # 0: device, 1: UDP, 2: file
 cfg_chirp                       = 2 # 0: no cfg, 1: sensor start, 2: full cfg
-data_destination                = 1 # 0: Azure, 1: UDP, 2: file
+data_dst                = 1 # 0: Azure, 1: UDP, 2: file
 raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
@@ -56,6 +57,9 @@ cfg_chirp_start_file_name       = 'chirp_cfg/sensor_start.cfg'
 #dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
 dst_udp_ip                      = '192.168.43.215' # maczem GO3
 data_udp_port                    = 10005
+
+def writa_data_2_file () :
+    file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
 
@@ -80,7 +84,7 @@ logging.info ( f"########## 'main.py' has started! ##########" )
 print ( hello )
 
 ### READ DATA
-if data_source == 0 :
+if data_src == 0 :
     print ( "\n############# Direct device sourcing.\n" )
     logging.info ( f"############# Direct device sourcing.\n")
     conf_com = serial.Serial ()
@@ -98,49 +102,51 @@ if data_source == 0 :
         logging.info ( f"############# Device full cfg.\n")
     conf_com.close ()
     frames_limit = 1
-elif data_source == 1:
+elif data_src == 1:
     print ( "\n############# UDP sourcing.\n" )
     logging.info ( f"############# UDP sourcing.\n")
     frames_limit = 1
     exit ()
-elif data_source == 2:
+elif data_src == 2:
     print ( "\n############# Saved raw data sourcing.\n" )
     logging.info ( f"############# Saved raw data sourcing.\n")
     saved_bin_frames = open ( saved_bin_data_file_name , 'r' ) .readlines ()
     frames_limit = len ( saved_bin_frames )
 else :
-    logging.info (f"Error: data_source not known. App exit!\n")
+    logging.info (f"Error: data_src not known. App exit!\n")
     exit ()
 
-if data_destination == 0 :
-    logging.info (f"Error: data_destination = 0. App exit!\n")
+if data_dst == 0 :
+    logging.info (f"Error: data_dst = 0. App exit!\n")
     exit ()
-elif data_destination == 1 :
+elif data_dst == 1 :
     ################ SOCKET Configuration
     udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
-elif data_destination == 2 :
+elif data_dst == 2 :
     pass
+
+thread_data_dst_2 = threading.Thread ( target = writa_data_2_file )
 
 i = 0
 while i < frames_limit :
-    if data_source == 0 :
+    if data_src == 0 :
         pc3d_object = mmradar3_pc3d.PC3D ( data_com )
         if pc3d_object.get_frame_header () :
             pc3d_object.get_tlvs ()
-    elif data_source == 1 :
-        logging.info (f"Error: data_source = 1. App exit!\n")
+    elif data_src == 1 :
+        logging.info (f"Error: data_src = 1. App exit!\n")
         exit ()
-    elif data_source ==  2 :
-        logging.info (f"Error: data_source = 2. App exit!\n")
+    elif data_src ==  2 :
+        logging.info (f"Error: data_src = 2. App exit!\n")
         exit ()
-    if data_destination == 0 :
-        logging.info (f"Error: data_destination = 0. App exit!\n")
+    if data_dst == 0 :
+        logging.info (f"Error: data_dst = 0. App exit!\n")
         exit ()
-    elif data_destination == 1 :
+    elif data_dst == 1 :
         #my_str_as_bytes = str.encode(my_str)
         udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
-    elif data_destination == 2 :
-        file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
+    elif data_dst == 2 :
+        thread_data_dst_2.start ()
     del pc3d_object
 udp.close ()
 data_com.close ()

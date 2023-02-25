@@ -14,6 +14,7 @@ import mmradar_ops2
 import mmradar_pc3d2
 import serial
 import serial_ops2
+import threading
 import time
 
 #from mmradar_ops2 import mmradar_conf
@@ -23,7 +24,7 @@ import time
 ### DEFINITIONS 
 ################################################################
 
-data_source                     = 0 # 0: device, 1: UDP, 2: file
+data_source                     = 2 # 0: device, 1: UDP, 2: file
 chirp_cfg                       = 0 # 0: no cfg, 1: only start(), 2: full cfg
 raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
@@ -33,6 +34,9 @@ saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_167574622320758750
 chirp_conf_file_name            = 'chirp_cfg/ISK_6m_staticRetention.cfg'
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
+
+def writa_data_2_file () :
+    file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
 
 ################################################################
 ###################### LOGGING CONFIG ##########################
@@ -84,6 +88,7 @@ match data_source :
         exit
 
 i = 0
+start_t = time.perf_counter ()
 while i < frames_limit :
     match data_source :
         case 0:
@@ -101,4 +106,8 @@ while i < frames_limit :
             pc3d_object.get_json_data ()
             i += 1
     file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
+    #thread_data_dst_2 = threading.Thread ( target = writa_data_2_file )
+    #thread_data_dst_2.start ()
     del pc3d_object
+finish_t = time.perf_counter ()
+print ( f"Total time for while loop = {finish_t - start_t}")
