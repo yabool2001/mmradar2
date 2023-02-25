@@ -48,8 +48,7 @@ hello = "\n\n##########################################\n############# mmradar s
 def data_dst_2_thread () :
     file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
 def data_dst_1_thread () :
-    #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
-    udp.sendall ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+    udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
 
 ################################################################
 ###################### LOGGING CONFIG ##########################
@@ -111,7 +110,7 @@ match data_dst :
         pass
 
 udp_ctrl_rcv = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
-udp_ctrl_rcv.bind ( src_udp_ip , ctrl_udp_port )
+udp_ctrl_rcv.bind ( ( src_udp_ip , ctrl_udp_port ) )
 
 i = 0
 start_t = time.perf_counter ()
@@ -135,7 +134,7 @@ while i < frames_limit :
         case 0 :
             pass
         case 1 :
-            #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+            #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) ) # alternatywa do 2 poniższych wierszy
             thread_data_dst_1 = threading.Thread ( target = data_dst_1_thread )
             thread_data_dst_1.start ()
         case 2 :
@@ -143,5 +142,7 @@ while i < frames_limit :
             thread_data_dst_2 = threading.Thread ( target = data_dst_2_thread )
             thread_data_dst_2.start ()
     del pc3d_object
+    rcvd_ctrl_data, addr = udp_ctrl_rcv.recvfrom ( 1024 ) # buffer size is 1024 bytes
+    print ( "received message: %s" %rcvd_ctrl_data)
 finish_t = time.perf_counter ()
 print ( f"Total time for while loop = {finish_t - start_t}")
