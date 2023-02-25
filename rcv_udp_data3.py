@@ -68,4 +68,5 @@ while True :
     except struct.error as e :
         print ( e )
 ################# CLOSE DATA COM PORT FILE ######################
-src_udp.close ()
+src_udp_data_rx.close ()
+src_udp_ctrl_rx.close ()
