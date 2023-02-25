@@ -42,9 +42,9 @@ import time
 ### DEFINITIONS 
 ################################################################
 
-data_src                        = 0 # 0: device, 1: UDP, 2: file
-cfg_chirp                       = 2 # 0: no cfg, 1: sensor start, 2: full cfg
-data_dst                = 1 # 0: Azure, 1: UDP, 2: file
+data_src                        = 2 # 0: device, 1: UDP, 2: file
+cfg_chirp                       = 0 # 0: no cfg, 1: sensor start, 2: full cfg
+data_dst                        = 2 # 0: Azure, 1: UDP, 2: file
 raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
@@ -125,8 +125,6 @@ elif data_dst == 1 :
 elif data_dst == 2 :
     pass
 
-thread_data_dst_2 = threading.Thread ( target = writa_data_2_file )
-
 i = 0
 while i < frames_limit :
     if data_src == 0 :
@@ -146,6 +144,7 @@ while i < frames_limit :
         #my_str_as_bytes = str.encode(my_str)
         udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
     elif data_dst == 2 :
+        thread_data_dst_2 = threading.Thread ( target = writa_data_2_file )
         thread_data_dst_2.start ()
     del pc3d_object
 udp.close ()

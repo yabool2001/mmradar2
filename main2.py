@@ -14,6 +14,7 @@ import mmradar_ops2
 import mmradar_pc3d2
 import serial
 import serial_ops2
+import socket
 import threading
 import time
 
@@ -25,6 +26,7 @@ import time
 ################################################################
 
 data_source                     = 2 # 0: device, 1: UDP, 2: file
+data_dst                        = 1 # 0: Azure, 1: UDP, 2: file
 chirp_cfg                       = 0 # 0: no cfg, 1: only start(), 2: full cfg
 raw_byte                        = bytes(1)
 log_file_name                   = 'log/mmradar.log'
@@ -32,11 +34,18 @@ data_file_name                  = 'mmradar.data'
 saved_parsed_data_file_name     = 'saved_parsed_data\mmradar.data.json'
 saved_bin_data_file_name        = 'saved_bin_data\mmradar_gen_1675746223207587500.bin_raw_data'
 chirp_conf_file_name            = 'chirp_cfg/ISK_6m_staticRetention.cfg'
+#src_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
+#src_udp_ip                      = '192.168.43.215' # maczem GO3
+#dst_udp_ip                      = '192.168.43.227' # maczem raspberry pi 3b+
+dst_udp_ip                      = '192.168.43.215' # maczem GO3
+data_udp_port                    = 10005
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
 
-def writa_data_2_file () :
+def data_dst_2_thread () :
     file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
+def data_dst_1_thread () :
+    udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
 
 ################################################################
 ###################### LOGGING CONFIG ##########################
@@ -87,6 +96,16 @@ match data_source :
         logging.info (f"Error: data_source not known. App exit!\n")
         exit
 
+match data_dst :
+    case 0 :
+        logging.info (f"Error: data_dst = 0. App exit!\n")
+        exit ()
+    case 1 :
+        ################ SOCKET Configuration
+        udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+    case 2 :
+        pass
+
 i = 0
 start_t = time.perf_counter ()
 while i < frames_limit :
@@ -105,9 +124,17 @@ while i < frames_limit :
             pc3d_object = mmradar_pc3d2.PC3D ( frame )
             pc3d_object.get_json_data ()
             i += 1
-    file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
-    #thread_data_dst_2 = threading.Thread ( target = writa_data_2_file )
-    #thread_data_dst_2.start ()
+    match data_dst :
+        case 0 :
+            pass
+        case 1 :
+            udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+            #thread_data_dst_1 = threading.Thread ( target = data_dst_1_thread )
+            #thread_data_dst_1.start ()
+        case 2 :
+            #file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
+            thread_data_dst_2 = threading.Thread ( target = data_dst_2_thread )
+            thread_data_dst_2.start ()
     del pc3d_object
 finish_t = time.perf_counter ()
 print ( f"Total time for while loop = {finish_t - start_t}")
