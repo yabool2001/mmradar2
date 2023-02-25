@@ -32,7 +32,7 @@ mmradar_cfg_file_name           = 'chirp_cfg/ISK_6m_default-mmwvt-v14.11.0.cfg'
 mmradar_stop_cfg_file_name      = 'chirp_cfg/sensor_stop.cfg'
 mmradar_start_cfg_file_name     = 'chirp_cfg/sensor_start.cfg'
 
-ctrl_exit = b'14'
+ctrl_exit = b'2143'
 
 hello = "\n\n##########################################\n######### send_udp_frame started #########\n##########################################\n"
 

@@ -6,7 +6,7 @@
 # thread do wysyłania UDP i zapisywania do log
 # zarządzanie przez UDP
 # możliwość rzadszego parsowania pakietów np. co 10, ustawianie przez UDP
-# crontab do uruchamiania skryptu po ka zdym reboot
+# crontab do uruchamiania skryptu po każdym reboot
 
 # Wymagania dla Linux
 # sys.path.append ( "/home/mzemlo/mmradar3/modules/" )
@@ -46,6 +46,7 @@ data_src                        = 2 # 0: device, 1: UDP, 2: file
 cfg_chirp                       = 0 # 0: no cfg, 1: sensor start, 2: full cfg
 data_dst                        = 2 # 0: Azure, 1: UDP, 2: file
 raw_byte                        = bytes(1)
+frames_limit                    = 0
 log_file_name                   = 'log/mmradar.log'
 data_file_name                  = 'mmradar.data'
 saved_parsed_data_file_name     = 'saved_parsed_data\mmradar.data.json'
@@ -58,8 +59,10 @@ cfg_chirp_start_file_name       = 'chirp_cfg/sensor_start.cfg'
 dst_udp_ip                      = '192.168.43.215' # maczem GO3
 data_udp_port                    = 10005
 
-def writa_data_2_file () :
+def data_dst_2_thread () :
     file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) )
+def data_dst_1_thread () :
+    udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
 
 hello = "\n\n##########################################\n############# mmradar started ############\n##########################################"
 
@@ -101,11 +104,9 @@ if data_src == 0 :
         print ( "\n############# Device full cfg.\n" )
         logging.info ( f"############# Device full cfg.\n")
     conf_com.close ()
-    frames_limit = 1
 elif data_src == 1:
     print ( "\n############# UDP sourcing.\n" )
     logging.info ( f"############# UDP sourcing.\n")
-    frames_limit = 1
     exit ()
 elif data_src == 2:
     print ( "\n############# Saved raw data sourcing.\n" )
@@ -126,7 +127,7 @@ elif data_dst == 2 :
     pass
 
 i = 0
-while i < frames_limit :
+while i < frames_limit or data_src < 2 :
     if data_src == 0 :
         pc3d_object = mmradar3_pc3d.PC3D ( data_com )
         if pc3d_object.get_frame_header () :
@@ -141,10 +142,12 @@ while i < frames_limit :
         logging.info (f"Error: data_dst = 0. App exit!\n")
         exit ()
     elif data_dst == 1 :
-        #my_str_as_bytes = str.encode(my_str)
-        udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) )
+        #udp.sendto ( str.encode ( str ( pc3d_object.frame_dict ) , "utf-8" ) , ( dst_udp_ip , data_udp_port ) ) # alternatywa dla 2 poniższych wierszy
+        thread_data_dst_1 = threading.Thread ( target = data_dst_1_thread )
+        thread_data_dst_1.start ()
     elif data_dst == 2 :
-        thread_data_dst_2 = threading.Thread ( target = writa_data_2_file )
+        #file_ops2.write_2_local_file ( saved_parsed_data_file_name , str ( pc3d_object.frame_dict ) ) # alternatywa dla 2 poniższych wierszy
+        thread_data_dst_2 = threading.Thread ( target = data_dst_2_thread )
         thread_data_dst_2.start ()
     del pc3d_object
 udp.close ()

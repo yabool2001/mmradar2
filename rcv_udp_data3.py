@@ -62,7 +62,7 @@ src_udp_ctrl_rx.bind ( ( src_udp_ip , ctrl_udp_port ) )
 while True :
     try :
         data , address = src_udp_data_rx.recvfrom ( 10000 )
-        ctrl , address = src_udp_data_rx.recvfrom ( 10000 )
+        ctrl , address = src_udp_data_rx.recvfrom ( 4 )
         print ( "\n\n 2. Server received data: ", data.decode ( 'utf-8' ) , "\n\n" )
         print ( "\n\n 2. Server received ctrl: ", ctrl.decode ( 'utf-8' ) , "\n\n" )
     except struct.error as e :
