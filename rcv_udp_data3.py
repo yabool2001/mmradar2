@@ -21,7 +21,8 @@ from file_ops import write_data_2_local_file
 ################################################################
 
 control                         = 506660481457717506
-frame                           = bytes(1)
+data                           = bytes(1)
+ctrl                           = bytes(1)
 
 frame_header_struct = 'Q9I2H'
 frame_header_length = struct.calcsize ( frame_header_struct )
@@ -51,14 +52,19 @@ hello = "\n\n##########################################\n############# mmradar s
 ################################################################
 #src_udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
 #dest_udp.sendto ( bytes ( 'Hello' , 'utf-8') , ( dest_udp_ip , dest_udp_port ) )
-src_udp = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
-src_udp.bind ( ( src_udp_ip , data_udp_port ) )
+src_udp_data_rx = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+src_udp_data_rx.bind ( ( src_udp_ip , data_udp_port ) )
+
+src_udp_ctrl_rx = socket.socket ( socket.AF_INET , socket.SOCK_DGRAM , socket.IPPROTO_UDP )
+src_udp_ctrl_rx.bind ( ( src_udp_ip , ctrl_udp_port ) )
 
 ##################### READ DATA #################################
 while True :
     try :
-        frame , address = src_udp.recvfrom ( 10000 )
-        print ( "\n\n 2. Server received: ", frame.decode ( 'utf-8' ) , "\n\n" )
+        data , address = src_udp_data_rx.recvfrom ( 10000 )
+        ctrl , address = src_udp_data_rx.recvfrom ( 10000 )
+        print ( "\n\n 2. Server received data: ", data.decode ( 'utf-8' ) , "\n\n" )
+        print ( "\n\n 2. Server received ctrl: ", ctrl.decode ( 'utf-8' ) , "\n\n" )
     except struct.error as e :
         print ( e )
 ################# CLOSE DATA COM PORT FILE ######################
